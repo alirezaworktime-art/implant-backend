@@ -6,10 +6,10 @@ const DOC = 'د.علوی کیا';
 const D = id => JSON.parse(h.sql(`select data from plans where id='${id}'`)[0].data);
 const T = id => h.sql(`select id, kind, due, done, note, info from tasks where plan='${id}' order by created, id`);
 // a paper file made earlier: an implant on 36 (JD 4.3×10), file number 7788, national id
-let r = await h.call('staff', 'fxArc', { id: '', by: 'منشی', ackDup: 1, ackFile: 1, arc: { v6: 1, name: 'رضا جامانده', phone: '09120000000', nid: '4420011223', age: '50', city: 'یزد', doc: DOC, pfile: '7788', pays: [], disc: {}, settled: false, rem: '', open: false,
+let r = await h.call('staff', 'fxArc', { id: '', by: 'منشی', ackDup: 1, ackFile: 1, arc: { v6: 1, name: 'رضا جامانده', phone: '09131234567', nid: '4420011223', age: '50', city: 'یزد', doc: DOC, pfile: '7788', pays: [], disc: {}, settled: false, rem: '', open: false,
   lines: [{ id: 'limp1', k: 'imp', day: day(-300), doc: DOC, teeth: ['LL6'], n: 1, price: 9000000, imp: { LL6: { b: 'JD', d: '4.3', l: '10' } } }] } });
 if (!r.ok) { console.log('setup failed', r); process.exit(1) } const pid = r.id;
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role, vw = 1400) => { const c = await b.newContext({ viewport: { width: vw, height: 950 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.PE = []; p.on('pageerror', e => p.PE.push(e.message));
   await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3200); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const jd = d => new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' }).format(new Date(d + 'T12:00:00Z'));
@@ -38,7 +38,7 @@ try {
   await p.selectOption('#a6Stage', 'exam'); await W(400);
   ok(await p.evaluate(() => { const d = document.getElementById('a6Due'); return !!d && /تاریخ معاینه/.test(d.closest('label').textContent) }), 'choosing «معاینه» asks for its date');
   await p.click('#a6Save'); await W(900); ok(/تاریخ معاینه را درست بزنید/.test(await p.evaluate(() => document.getElementById('a6Msg').textContent)), 'saving without the date is refused', await p.evaluate(() => document.getElementById('a6Msg').textContent));
-  await p.fill('#a6Due', jd(day(0))); await p.keyboard.press('Tab'); await p.screenshot({ path: '/home/claude/w/m29/form.png', fullPage: true }); await p.click('#a6Save'); await W(3500);
+  await p.fill('#a6Due', jd(day(0))); await p.keyboard.press('Tab'); await p.screenshot({ path: '/tmp/form.png', fullPage: true }); await p.click('#a6Save'); await W(3500);
   const ask = await p.evaluate(() => { const s = document.getElementById('uxAskSh'); return s && !s.hidden ? s.textContent.slice(0, 80) : '' }); if (ask) { await p.click('#uxAskOk'); await W(3000) }
   const a = D(pid).arc, fl = a.lines.find(l => l.k === 'ifail'), ts = T(pid);
   ok(fl && fl.rm === 1 && fl.day === day(-30) && fl.teeth.join() === 'LL6' && a.cost === 9000000 && a.sub && a.sub.k === 'exam' && a.sub.due === day(0), 'saved: the failure line and the sub-stage', [fl, a.sub, ask, await p.evaluate(() => (document.getElementById('a6Msg') || {}).textContent)]);
@@ -60,13 +60,13 @@ try {
   ok(L.all.some(x => /معاینه \(پرونده‌ی جا مانده\)/.test(x) && /تعیین نوبت/.test(x) && /@ucList/.test(x)) && L.all.some(x => /کاشت دوباره‌ی ایمپلنت — دندان 36/.test(x) && /تعیین نوبت/.test(x)), 'reception sees «معاینه» (with «تعیین نوبت») and «کاشت دوباره‌ی ایمپلنت» with the tooth', L.all);
   ok(await p.evaluate(() => tileList().find(t => t.k === 'unc').n >= 1), 'the tile badge counts the exam');
   // follow-up
-  await h.must('staff', 'fxArc', { id: pid, by: 'منشی', arc: Object.assign({ v6: 1, name: 'رضا جامانده', phone: '09120000000', nid: '4420011223', age: '50', city: 'یزد', doc: DOC, pfile: '7788', pays: [], disc: {}, settled: false, rem: '', lines: D(pid).arc.lines, open: true, type: 'fix', stage: 'fup', due: day(0) }) });
+  await h.must('staff', 'fxArc', { id: pid, by: 'منشی', arc: Object.assign({ v6: 1, name: 'رضا جامانده', phone: '09131234567', nid: '4420011223', age: '50', city: 'یزد', doc: DOC, pfile: '7788', pays: [], disc: {}, settled: false, rem: '', lines: D(pid).arc.lines, open: true, type: 'fix', stage: 'fup', due: day(0) }) });
   await p.reload(); await W(3500); const L2 = await p.evaluate(() => [...document.querySelectorAll('.item.task')].filter(x => /رضا جامانده/.test(x.textContent)).map(x => x.innerText.replace(/\s+/g, ' ').slice(0, 200) + ' @' + (x.closest('[id]') || {}).id));
   ok(L2.some(x => /پیگیری \(پرونده‌ی جا مانده\)/.test(x) && /@fuList/.test(x) && /نوبت ویزیت/.test(x)) && !L2.some(x => /معاینه \(پرونده/.test(x) && !/انجام شد/.test(x.slice(0, 120))), '«پیگیری» shows in the follow-up list with «نوبت ویزیت»', L2);
   ok(await p.evaluate(() => tileList().find(t => t.k === 'fol').n >= 1), 'the «پیگیری‌ها» tile counts it');
   ok(p.PE.length === 0, 'no page errors', p.PE);
   // phone
   const ph = await login('staff', 390); await ph.fill('#rS', '7788'); await W(500); await ph.click('#rSRes [data-m29arc]'); await W(2500); await ph.evaluate(() => { const b = document.querySelector('[data-a6k="ifail"]'); if (b && b.getAttribute('aria-pressed') !== 'true') b.click() }); await W(500);
-  ok(await ph.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1) && ph.PE.length === 0, 'phone: the form with the new treatment has no sideways scroll', await ph.evaluate(() => [document.documentElement.scrollWidth, innerWidth])); await ph.screenshot({ path: '/home/claude/w/m29/form-phone.png' });
+  ok(await ph.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1) && ph.PE.length === 0, 'phone: the form with the new treatment has no sideways scroll', await ph.evaluate(() => [document.documentElement.scrollWidth, innerWidth])); await ph.screenshot({ path: '/tmp/form-phone.png' });
 } catch (e) { bad++; console.log('ERR', e.stack.slice(0, 800)) }
 await b.close(); h.stop(); console.log(bad ? 'FAILED ' + bad : 'ALL OK'); process.exit(bad ? 1 : 0);

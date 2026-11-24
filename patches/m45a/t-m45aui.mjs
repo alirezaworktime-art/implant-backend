@@ -1,14 +1,14 @@
 // t-m45aui: surgery sheet — suture kind, surgical guide, repeated-tooth and far-cost confirmations. Run: WORKER=<m45a bundle> node t-m45aui.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid } = A; const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid } = A; const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0;
 const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 700))); if (!c) bad++ };
 await h.must('manager', 'settings', { settings: { prices: { arc_sgd: { price: '3000000' } } } });
 const refer = async (id, nm) => { const tk = h.tasks(id).find(t => t.kind === 'book' && !t.done); await h.appt(id, nm, 'surg', h.today(), tk && tk.id); await h.must('staff', 'toSurgery', { id }) };
 const mk = async nm => { const id = await h.add(nm); await h.plan(id, nm); await h.confirm(id, nm, 'book'); await h.must('consultant', 'payAdd', { id, pid: 'x-' + uuid(), pay: { kind: 'cash', pos: '', acct: '', part: 's', amount: 60000000, by: 'م', note: '' }, sendId: uuid() }); await refer(id, nm); return id };
 const n1 = 'بیمار منتظر', id1 = await mk(n1); const n2 = 'بیمار دو جلسه', id2 = await mk(n2); await h.surg(id2, n2, false); await refer(id2, n2);
 const sg = id => JSON.parse(h.sql(`select surg from plans where id='${id}'`)[0].surg || '{}');
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [];
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [];
 const login = async (role, vw = 1280, vh = 800) => { const c = await b.newContext({ viewport: { width: vw, height: vh }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const ask = p => p.evaluate(() => { const s = document.getElementById('uxAskSh'); return s && !s.hidden ? s.innerText.slice(0, 400) : '' });
 const answer = (p, re) => p.evaluate(src => { const R = new RegExp(src); const bt = [...document.querySelectorAll('button')].filter(x => x.offsetParent !== null && R.test(x.textContent)).pop(); if (bt) bt.click(); return !!bt }, re.source);

@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms));
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [];
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms));
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [];
 const login = async (role, vw = 1280, vh = 800) => { const c = await b.newContext({ viewport: { width: vw, height: vh }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 try { const p = await login('staff'); await p.evaluate(() => a6Open()); await W(1800);
   const r = await p.evaluate(async () => { const W = ms => new Promise(r => setTimeout(r, ms)); const l1 = a6NewLine('imp'); A6.op.add('imp'); a6Render(); await W(100);

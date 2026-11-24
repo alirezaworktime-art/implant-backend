@@ -1,5 +1,12 @@
 secrets/local.mjs
 dist/
+dev-data/
 node_modules/
 *.db
 *.db-*
+reg-*/
+regl-*/
+patches/reg-*/
+patches/regl-*/
+patches/reg-*.out
+patches/regl-*.out

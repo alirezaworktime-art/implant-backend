@@ -1,14 +1,14 @@
 // t-m50eui: surgery day, implant window — the last brand picked stays for the next tooth. Run: WORKER=<m50e bundle> node t-m50eui.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid } = A;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid } = A;
 let bad = 0; const PE = []; const W = ms => new Promise(r => setTimeout(r, ms));
 const ok = (c, t, x) => { console.log((c ? 'ok   ' : 'FAIL ') + t + (c || x === undefined ? '' : ' ' + String(JSON.stringify(x)).slice(0, 600))); if (!c) bad++ };
 const h = await A.start();
 await h.call('manager', 'settings', { settings: { catalog: [{ b: 'IZEN', sys: '', g: 'ko', d: ['4', '4.5'], l: ['8', '10', '11.5'], h: [] }, { b: 'Dentium', sys: 'SuperLine', g: 'ko', d: ['4', '4.5'], l: ['8', '10'], h: [] }, { b: 'JD', sys: 'Plus', g: 'it', d: ['3.7', '4.3'], l: ['8', '10'], h: [] }, { b: 'JD', sys: 'Icon', g: 'it', d: ['3.7', '4.3'], l: ['8', '10'], h: [] }] } });
 const id = await h.add('نمونه برند'); await h.plan(id, 'نمونه برند'); await h.confirm(id, 'نمونه برند', 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, 'نمونه برند', 'surg', h.today(), tk.id);
 await h.must('consultant', 'payAdd', { id, pid: 'x-' + uuid(), pay: { kind: 'cash', pos: '', acct: '', part: 's', amount: 90000000, by: 'م', note: '' }, sendId: uuid() }); await h.must('staff', 'toSurgery', { id });
-const br = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const br = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 try {
   const c = await br.newContext({ viewport: { width: 1180, height: 820 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200)));
   await p.goto(h.url); await p.click('[data-lrole="surgery"]'); await p.fill('#lg_pw', A.PW.surgery); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove()));

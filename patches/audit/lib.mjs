@@ -1,13 +1,13 @@
 import require_fs from 'node:fs';
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); export const { chromium } = req('playwright-core');
-export const H = await import('file:///home/claude/w/h/h.mjs'); export const SIGN = (await import('file:///home/claude/w/h/seed2.mjs')).SIGN;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); export const { chromium } = req('playwright-core');
+export const H = await import(new URL('../h/h.mjs', import.meta.url).href); export const SIGN = (await import(new URL('../h/seed2.mjs', import.meta.url).href)).SIGN;
 export async function login(b, h, role, vp) { const c = await b.newContext(Object.assign({ viewport: { width: 1366, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }, vp || {})); await c.route(/googleapis|gstatic/, r => r.abort());
   const p = await c.newPage(); p.E = []; p.on('pageerror', e => p.E.push('PE ' + e.message)); p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) p.E.push('CE ' + m.text()) });
   p.on('response', async r => { if (/\/api/.test(r.url())) { try { const j = await r.json(); if (j && j.ok === false && !/conflict|stale/.test(j.error || '')) p.E.push('API ' + r.request().postData()?.slice(0, 120) + ' → ' + (j.error || JSON.stringify(j)).slice(0, 200)) } catch (e) { } } });
-  p.on('request', r => { try { if (r.method() === 'POST') { const j = JSON.parse(r.postData() || '{}'); delete j.password; delete j.token; const s = JSON.stringify(j); require_fs.appendFileSync('/home/claude/w/audit/api.log', role + ' ' + (s.length > 400000 ? s.slice(0, 400000) + '…' : s) + '\n') } } catch (e) { } }); p.on('dialog', d => { p.E.push('DLG ' + d.message().slice(0, 120)); d.accept() });
+  p.on('request', r => { try { if (r.method() === 'POST') { const j = JSON.parse(r.postData() || '{}'); delete j.password; delete j.token; const s = JSON.stringify(j); require_fs.appendFileSync('/tmp/api.log', role + ' ' + (s.length > 400000 ? s.slice(0, 400000) + '…' : s) + '\n') } } catch (e) { } }); p.on('dialog', d => { p.E.push('DLG ' + d.message().slice(0, 120)); d.accept() });
   await p.goto(h.url); await p.click(`[data-lrole="${role}"]`).catch(() => { }); await p.fill('#lg_pw', H.PW[role]); await p.click('#lgGo'); await p.waitForTimeout(2500);
   await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p }
-export const shot = (p, n) => p.screenshot({ path: '/home/claude/w/e2e/s-' + n + '.png', fullPage: true });
+export const shot = (p, n) => p.screenshot({ path: '/tmp/s-' + n + '.png', fullPage: true });
 export const vis = p => p.evaluate(() => [...document.querySelectorAll('input,select,textarea,button,[data-tile]')].filter(e => e.offsetParent && !e.closest('#tiles') ).map(e => e.tagName[0] + '#' + e.id + '{' + Object.entries(e.dataset || {}).map(([k, v]) => k + '=' + v).join(',').slice(0, 60) + '}' + (e.placeholder || e.textContent || e.value || '').trim().replace(/\s+/g, ' ').slice(0, 30)).join('\n'));
 export const clickTxt = (p, sel, re) => p.evaluate(([sel, re]) => { const b = [...document.querySelectorAll(sel)].filter(e => e.offsetParent).find(e => new RegExp(re).test(e.textContent)); if (!b) return false; b.click(); return true }, [sel, re]);

@@ -3,7 +3,7 @@ import { h, A, W, chromium } from '../m24/probe.mjs'; import { uuid } from '../a
 const mkS = async name => { const id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);
   await h.must('consultant', 'payAdd', { id, pid: 'x-' + uuid(), pay: { kind: 'cash', pos: '', acct: '', part: 's', amount: 60000000, by: 'م', note: '' }, sendId: uuid() }); await h.must('staff', 'toSurgery', { id }); return id };
 await mkS('میمون جراحی'); const F = []; let clicks = 0;
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 for (const vw of [1400, 390]) { const c = await b.newContext({ viewport: { width: vw, height: 950 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); let where = 'login';
   const add = (k, m) => { const s = vw + ' | ' + where + ' | ' + k + ' | ' + String(m).slice(0, 180); if (!F.includes(s)) F.push(s) };
   p.on('pageerror', e => add('PAGEERR', e.message + ' @ ' + String(e.stack).split('\n').slice(1, 3).join(' < ').slice(0, 160))); p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) add('CONSOLE', m.text()) });

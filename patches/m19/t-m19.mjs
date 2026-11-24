@@ -1,10 +1,10 @@
 // t-m19: «سایر کلینیک‌ها» plan — nothing the doctor marks is lost on save; guide + notes; PDF downloads with the clinic header and without our clinic's data.
 // Run: WORKER=<bundle> node t-m19.mjs   (needs ../audit/A.mjs + rec.json + server-clock.mjs)
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); A.PW.oclin = 'toclin1xx';
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); A.PW.oclin = 'toclin1xx';
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const c = await b.newContext({ viewport: { width: 1366, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran', acceptDownloads: true }); await c.route(/googleapis|gstatic/, r => r.abort());
 const p = await c.newPage(); const PE = []; p.on('pageerror', e => PE.push(e.message)); p.on('dialog', d => d.dismiss());
 try {

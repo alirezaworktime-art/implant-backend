@@ -7,7 +7,7 @@ const OLD = REC.queueAdd[0].req.id;
 export const uuid = () => crypto.randomUUID();
 export async function start() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'au-')), app = path.join(dir, 'app'); fs.mkdirSync(app);
-  fs.copyFileSync(process.env.WORKER || '/home/claude/w/iran-worker-m17.mjs', path.join(app, 'worker.js'));
+  fs.copyFileSync(process.env.WORKER, path.join(app, 'worker.js'));
   const port = 20000 + Math.floor(Math.random() * 2000), db = path.join(dir, 'd.db'), clock = path.join(dir, 'clock'); fs.writeFileSync(clock, '0');
   const p = spawn(process.execPath, ['--no-warnings', new URL('./server-clock.mjs', import.meta.url).pathname], { env: { ...process.env, APP_DIR: app, DB_FILE: db, RUN_DIR: dir, PORT: String(port), HOST: '127.0.0.1', IMPORT_KEY: '', BACKUP_HASH: '', CLOCK: clock }, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = ''; p.stdout.on('data', d => log += d); p.stderr.on('data', d => log += d);
@@ -29,7 +29,7 @@ export async function start() {
   H.add = async (name, extra = {}) => { const id = uuid(); const q = sub(REC.queueAdd[0].req, id, name); q.patient.nid = String(1000000000 + Math.floor(Math.random() * 8999999999)); q.patient.phone = '0913' + String(1000000 + Math.floor(Math.random() * 8999999)); Object.assign(q.patient, extra); delete q.action; await must('staff', 'queueAdd', q); return id };
   H.plan = async (id, name) => { const q = sub(REC.toConsult[0].req, id, name); delete q.action; q.record.data.updatedAt = new Date(Date.now() + off * 864e5).toISOString(); q.sendId = uuid(); await must('doctor', 'queueOpen', { id }); q.record.data._v = ver(id); return must('doctor', 'toConsult', q) };
   H.confirm = async (id, name, next = 'book') => { const q = sub(REC.confirm[0].req, id, name); delete q.action; q.record.data.updatedAt = new Date(Date.now() + off * 864e5 + 1000).toISOString(); q.next = next; q.sendId = uuid(); await must('consultant', 'queueOpen', { id }); q.record.data._v = ver(id); return must('consultant', 'confirm', q) };
-  H.appt = async (id, name, kind, day, task = '', time = '09:00') => must('staff', 'apptSave', { appt: { plan: id, name, phone: '09120000000', day, time, dur: '60', kind, doc: 'دکتر سید مجتبی علویکیا', note: '', by: 'منشی', onl: '0' }, aid: '', task, sendId: uuid() });
+  H.appt = async (id, name, kind, day, task = '', time = '09:00') => must('staff', 'apptSave', { appt: { plan: id, name, phone: '09131234567', day, time, dur: '60', kind, doc: 'دکتر سید مجتبی علویکیا', note: '', by: 'منشی', onl: '0' }, aid: '', task, sendId: uuid() });
   H.surg = async (id, name, last = true) => { const q = sub(REC.surgSave[0].req, id, name); delete q.action; q.session.at = new Date(Date.now() + off * 864e5).toISOString(); q.sendId = uuid(); if (!last) { q.session.last = 0; q.last = 0 } return must('surgery', 'surgSave', q) };
   // ---- where is this plan visible right now?
   H.where = async id => { const W = []; const td = today();

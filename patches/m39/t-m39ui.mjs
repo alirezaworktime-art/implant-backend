@@ -1,13 +1,13 @@
 // m39 browser test: lab side sections — group tiles, lists as cards, old table on request, nothing lost, no sideways scroll on a phone.
 import { createRequire } from 'node:module'; import * as A from '../audit/A.mjs';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0;
 const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
 const raw = async (pw, action, body = {}) => (await fetch(h.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, password: pw, ...body }) })).json();
 const D0 = await h.call('lab', 'labDefs', { op: 'get' }); const wt = (D0.wts || D0.wt || [])[0];
 for (const n of ['بیمار نمونه یک', 'بیمار نمونه دو', 'بیمار نمونه سه']) await raw(A.PW.lab, 'lab4New', { id: '', name: n, clinic: 'کلینیک نمونه', lid: A.uuid(), sendId: A.uuid(), order: { teeth: ['UR6', 'UR5'], note: '' } });
 await h.must('manager', 'userSave', { u: { name: 'کارمند ساده', role: 'lab', pw: 'plain-test-11', lab: { depts: [103] } } });
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [];
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [];
 const login = async (pw, vw) => { const c = await b.newContext({ viewport: { width: vw, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200)));
   await p.goto(h.url); await p.click('[data-lrole="lab"]'); await p.fill('#lg_pw', pw); await p.click('#lgGo'); await W(3500); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return { p, c } };
 const go = async (p, s) => { await p.evaluate(s => l5Go(s), s); await W(1300) };

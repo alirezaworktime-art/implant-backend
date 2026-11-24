@@ -1,5 +1,5 @@
 // explore the test database tables of «سایر کلینیک‌ها» (fresh test data only)
-const A = await import('file:///home/claude/w/audit/A.mjs'); const h = await A.start(); const J = (x, n = 3000) => JSON.stringify(x).slice(0, n);
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const h = await A.start(); const J = (x, n = 3000) => JSON.stringify(x).slice(0, n);
 try {
   await h.call('accountant', 'oc', { op: 'load' });
   console.log(J(h.sql("select name, sql from sqlite_master where type='table' and (name like 'oc%' or sql like '%clinic%')")));

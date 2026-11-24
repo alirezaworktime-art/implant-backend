@@ -1,14 +1,14 @@
 // t-m50b (server + page): way of payment at reception (cash with discount / plan terms); «پزشک کلینیک» as assistant doctor. Run: WORKER=<m50b bundle> node t-m50b.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 let bad = 0; const PE = []; const J = (x, n = 600) => String(JSON.stringify(x)).slice(0, n); const W = ms => new Promise(r => setTimeout(r, ms));
 const ok = (c, t, x) => { console.log((c ? 'ok   ' : 'FAIL ') + t + (c || x === undefined ? '' : ' ' + J(x))); if (!c) bad++ };
 const h = await A.start(); const OLD = REC.queueAdd[0].req.id;
 const body = (id, finish) => { const q = JSON.parse(JSON.stringify(REC.surgSave[0].req).split(OLD).join(id)); delete q.action; q.session.at = new Date(Date.now() + h.off() * 864e5).toISOString(); q.sendId = uuid(); q.finish = !!finish; return q };
 const pre = async nm => { const id = await h.add(nm); await h.plan(id, nm); await h.confirm(id, nm, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, nm, 'surg', h.today(), tk.id); return id };
 const row = id => { const x = h.sql(`select total, data from plans where id='${id}'`)[0], d = JSON.parse(x.data); return { total: Number(x.total), pay: d.pay || {}, parts: d.parts || null } };
-const br = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const br = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async role => { const c = await br.newContext({ viewport: { width: 1280, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); p.on('dialog', x => x.dismiss()); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 try {
   const a = await pre('نمونه نقدی'), r0 = row(a); console.log('     plan: total ' + r0.total + ' · terms ' + J({ opt: r0.pay.opt, cs: r0.pay.cs, cp: r0.pay.cp, n1: r0.pay.n1, n3: r0.pay.n3, disc: r0.pay.disc, cash: r0.pay.cash }));

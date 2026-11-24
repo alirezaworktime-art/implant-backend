@@ -1,4 +1,5 @@
 #!/bin/bash
+W=${W:-$(cd "$(dirname "$0")/.." && pwd)}
 # builds m47a (prosthesis session: «ارسال کار برای لابراتوار» opens the lab work order, no mandatory field; page + server) for Iran and Cloudflare. Run in Git Bash.
 # The patch was built and tested on the sanitized copy; here it is only applied to the real bundles.
 set -e

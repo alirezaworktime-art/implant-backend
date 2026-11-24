@@ -1,7 +1,7 @@
 // t-m47aui: «جلسه‌ی پروتز» — the lab work order opens with «ارسال کار برای لابراتوار», nothing in it is mandatory, files go with it. Run: WORKER=<m47a bundle> node t-m47aui.mjs
 import { createRequire } from 'node:module'; import fs from 'node:fs';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const PE = []; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 600))); if (!c) bad++ };
 const rx0 = (await h.call('doctor', 'rxGet', {})).tpl;
 const toDis = async (name) => { const id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);
@@ -11,7 +11,7 @@ const toDis = async (name) => { const id = await h.add(name); await h.plan(id, n
 const P = id => JSON.parse(h.sql(`select pros from plans where id='${id}'`)[0].pros || '{}');
 const labsOf = id => h.sql(`select id, st, due, data from labs where plan='${id}' order by created`).map(l => Object.assign(l, { data: JSON.parse(l.data || '{}') }));
 const p1 = await toDis('بیمار دستورکار'), p2 = await toDis('بیمار بی‌سفارش'), p3 = await toDis('بیمار کامل'); await h.travel(1);
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role, vw = 1280, vh = 800) => { const c = await b.newContext({ viewport: { width: vw, height: vh }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const st = p => p.evaluate(() => { const v = e => !!e && e.offsetParent !== null, q = s => document.querySelector(s); return { go: v(q('#m47Go')), form: v(q('#pfBody .h9form')), hd: v(q('#m47Hd')), lab: (q('#pfActs #l5Lab') || {}).textContent || '', save: (q('#pfActs #l5Save') || {}).textContent || '', star: [...document.querySelectorAll('#pfBody .l8req')].some(v), drop: v(q('#h9Drop')), msg: (q('#l5Msg') || {}).textContent || '', sheet: !q('#pfSheet').hidden, chart: v(q('#pfBody .pk4teeth')), base: (typeof LO !== 'undefined' && LO && LO.h9 ? LO.h9.base : []).join(','), pon: (typeof LO !== 'undefined' && LO && LO.h9 ? LO.h9.pon : []).join(',') } });
 try {
@@ -26,7 +26,7 @@ try {
   ok(s.base === 'UR6' && s.pon === 'UR5', 'the sheet starts with the پایه / پونتیک of the session', s);
   ok(await p.evaluate(() => document.getElementById('ps_note').value === 'قالب گرفته شد'), 'typed note is kept');
   fs.writeFileSync('/tmp/m47-scan.stl', 'solid x\nendsolid x\n'); await p.setInputFiles('#lo_files', '/tmp/m47-scan.stl'); await W(400);
-  await p.screenshot({ path: '/home/claude/w/m47a/open.png', fullPage: false });
+  await p.screenshot({ path: '/tmp/open.png', fullPage: false });
   await p.click('#pfActs #l5Lab'); for (let i = 0; i < 60 && (await st(p)).sheet; i++) await W(250); s = await st(p);
   let L = labsOf(p1), pr = P(p1); ok(!s.sheet && L.length === 1, 'empty work order is stored and goes to the lab', { s, n: L.length });
   ok(L[0] && L[0].data.teeth.slice().sort().join() === 'UR5,UR6' && (L[0].data.pon || []).join() === 'UR5', 'order teeth = session teeth', L[0] && L[0].data);

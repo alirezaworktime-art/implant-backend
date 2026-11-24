@@ -1,14 +1,19 @@
 // Builds the single worker bundle (site + API) that runs on the Iran server (Node + node:sqlite D1 shim) and on Cloudflare.
-// Usage: node scripts/build-bundle.mjs <path-to-implant-frontend> <path-to-implant-tablet> [out=dist/worker.mjs]
+// Usage: node scripts/build-bundle.mjs <path-to-implant-frontend> <path-to-implant-tablet> [out=dist/worker.mjs] [--target iran|cloudflare]
+// --target cloudflare uses IMPORT_KEY_CF (the key the nightly Iran → Cloudflare copy uses); iran (default) uses IMPORT_KEY (keep '').
 // Secrets come from secrets/local.mjs (git-ignored); without it the bundle has no passwords (nobody can log in).
 import fs from 'node:fs'; import path from 'node:path'; import url from 'node:url';
 const here = path.dirname(url.fileURLToPath(import.meta.url)), root = path.join(here, '..');
-const [fe, tab, out = path.join(root, 'dist', 'worker.mjs')] = process.argv.slice(2);
+const av = process.argv.slice(2), ti = av.indexOf('--target'), target = ti >= 0 ? av.splice(ti, 2)[1] : 'iran';
+const [fe, tab, out = path.join(root, 'dist', 'worker.mjs')] = av;
 if (!fe || !tab) { console.error('usage: node scripts/build-bundle.mjs <frontend dir> <tablet dir> [out]'); process.exit(2); }
-let S = { PW_HASH: {}, BACKUP_HASH: '', IMPORT_KEY: '', SENDER: 'user@example.com', APPS_SCRIPT_DEPLOYMENT_ID: 'APPS_SCRIPT_DEPLOYMENT_ID', LF_DEF: { lfdoc: '', lflab: '' } };
+let S = { PW_HASH: {}, BACKUP_HASH: '', IMPORT_KEY: '', SENDER: 'user@example.com', APPS_SCRIPT_DEPLOYMENT_ID: 'APPS_SCRIPT_DEPLOYMENT_ID', LF_DEF: { lfdoc: 'dev-lfdoc', lflab: 'dev-lflab' } };
 const sec = path.join(root, 'secrets', 'local.mjs'); if (fs.existsSync(sec)) S = Object.assign(S, (await import(url.pathToFileURL(sec))).default);
 const T = (f, enc) => fs.readFileSync(path.join(fe, f), enc);
-const gas = t => S.APPS_SCRIPT_DEPLOYMENT_ID ? t.split('APPS_SCRIPT_DEPLOYMENT_ID').join(S.APPS_SCRIPT_DEPLOYMENT_ID) : t;
+const faN = s => String(s).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+const phone = t => { for (const [k, v] of Object.entries(S.PHONES || {})) if (v) t = t.split(k).join(v).split(faN(k)).join(faN(v)); return t; };
+const mail = t => t.split('sender@example.com').join(S.SENDER || 'sender@example.com').split('recipient@example.com').join(S.EMAIL_HINT || 'recipient@example.com');
+const gas = t => mail(phone(S.APPS_SCRIPT_DEPLOYMENT_ID ? t.split('APPS_SCRIPT_DEPLOYMENT_ID').join(S.APPS_SCRIPT_DEPLOYMENT_ID) : t));
 const H = 'text/html; charset=utf-8', J = 'text/javascript; charset=utf-8', P = 'image/png';
 const txt = (t, d) => ({ t, d, b: 0 }), bin = (t, buf) => ({ t, d: buf.toString('base64'), b: 1 });
 const index = gas(T('index.html', 'utf8'));
@@ -25,8 +30,8 @@ const A = {
   '/f': { t: H, d: gas(T('f.html', 'utf8')) },
   '/pdf.min.mjs': txt(J, T('vendor/pdfjs/pdf.min.mjs', 'utf8')), '/pdf.worker.min.mjs': txt(J, T('vendor/pdfjs/pdf.worker.min.mjs', 'utf8'))
 };
-const head = fs.readFileSync(path.join(root, 'src', 'header.js'), 'utf8')
+const head = phone(fs.readFileSync(path.join(root, 'src', 'header.js'), 'utf8'))
   .replace('__PW_HASH__', '{' + Object.entries(S.PW_HASH).map(([k, v]) => `'${k}':'${v}'`).join(',') + '}')
-  .replace('__IMPORT_KEY__', `'${S.IMPORT_KEY}'`).replace('__SENDER__', `'${S.SENDER}'`);
-const bundle = head + 'const ASSETS=' + JSON.stringify(A) + ';\n' + `const BACKUP_HASH='${S.BACKUP_HASH}';\n` + fs.readFileSync(path.join(root, 'src', 'server.js'), 'utf8').replace('__LF_DEF__', '{ ' + Object.entries(S.LF_DEF).map(([k, v]) => `${k}: '${v}'`).join(', ') + ' }');
+  .replace('__IMPORT_KEY__', `'${target === 'cloudflare' ? (S.IMPORT_KEY_CF || '') : S.IMPORT_KEY}'`).replace('__SENDER__', `'${S.SENDER}'`);
+const bundle = head + 'const ASSETS=' + JSON.stringify(A) + ';\n' + `const BACKUP_HASH='${S.BACKUP_HASH}';\n` + mail(fs.readFileSync(path.join(root, 'src', 'server.js'), 'utf8')).replace('__LF_DEF__', '{ ' + Object.entries(S.LF_DEF).map(([k, v]) => `${k}: '${v}'`).join(', ') + ' }');
 fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, bundle); console.log('wrote', out, bundle.length, 'bytes');

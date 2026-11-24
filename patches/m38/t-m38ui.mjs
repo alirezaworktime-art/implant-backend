@@ -1,7 +1,7 @@
 // m38 browser test: offline surgery session is queued on the device and sent when the connection is back; lost answer is not recorded twice; server refusal is shown; stuck-patient notice.
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A; const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms));
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A; const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms));
 let bad = 0; const ok = (c, t) => { console.log((c ? 'ok   ' : 'FAIL ') + t); if (!c) bad++; };
 const OLD = REC.queueAdd[0].req.id;
 const ready = async (name) => { const id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);
@@ -10,7 +10,7 @@ const ses = id => JSON.parse(JSON.stringify(REC.surgSave[0].req.session).split(O
 const nses = id => h.sql(`select coalesce(json_array_length(surg,'$.sessions'),0) n from plans where id='${id}'`)[0].n;
 await h.travel(-2); const P4 = await ready('جامانده'); await h.travel(2);
 const P1 = await ready('آفلاین یک'), P2 = await ready('پاسخ گم‌شده'), P3 = await ready('رد سرور');
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (c, role) => { const p = await c.newPage(); p.on('pageerror', e => { console.log('PAGEERR', e.message.slice(0, 200)); bad++; }); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const commit = (p, name, s, fin) => p.evaluate(async ({ name, s, fin }) => { goTile('surg'); openSurg(QITEMS.find(q => q.name === name)); await new Promise(r => setTimeout(r, 600)); SGP = { ses: s, fin, all: SURG.prev.concat([s]) }; const t = document.createElement('button'); await surgCommit(t); return { q: m38.q().length, view: !document.getElementById('viewSurg').hidden, bar: (document.getElementById('m38Bar') || {}).innerText || '', sr: document.getElementById('srMsg').textContent } }, { name, s, fin });
 try {

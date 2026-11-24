@@ -1,0 +1,15 @@
+{
+  "name": "implant-backend",
+  "private": true,
+  "type": "module",
+  "description": "Yazd implant clinic treatment-plan system — API server, build, ops, patches and tests",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "build": "node scripts/build-bundle.mjs ../implant-frontend ../implant-tablet dist/worker.mjs",
+    "dev": "node scripts/dev.mjs",
+    "dev:fresh": "node scripts/dev.mjs --fresh",
+    "test": "npm run build && WORKER=dist/worker.mjs node --no-warnings --import ./patches/m23/sameday-shim.mjs patches/m61a/t-m61a.mjs",
+    "test:all": "npm run build && bash patches/reg-all.sh $PWD/dist/worker.mjs all"
+  },
+  "devDependencies": { "playwright-core": "^1.50.0" }
+}

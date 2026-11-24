@@ -1,7 +1,7 @@
 // t-m51a (server + page): paper files — repeated file number / national id announced while typing. Run: WORKER=<m51a bundle> node t-m51a.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href);
 let bad = 0; const PE = []; const J = (x, n = 500) => String(JSON.stringify(x)).slice(0, n); const W = ms => new Promise(r => setTimeout(r, ms));
 const ok = (c, t, x) => { console.log((c ? 'ok   ' : 'FAIL ') + t + (c || x === undefined ? '' : ' ' + J(x))); if (!c) bad++ };
 const h = await A.start();
@@ -14,7 +14,7 @@ try {
   r = await h.call('staff', 'm51Dup', { id: '', file: '99887', nid: '1234' }); ok(r.ok && !r.file && r.nid.length === 0, 'server: a free number and a short id give nothing', r);
   r = await h.call('surgery', 'm51Dup', { id: '', file: '4321' }); ok(r.ok === false, 'server: only reception and the consultant', r);
   // ---------- page
-  const br = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+  const br = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
   const c = await br.newContext({ viewport: { width: 1180, height: 860 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, x => x.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200)));
   await p.goto(h.url); await p.click('[data-lrole="staff"]'); await p.fill('#lg_pw', A.PW.staff); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove()));
   ok(await p.evaluate(() => /---------- m51a \(/.test(document.documentElement.innerHTML)), 'm51a marker in the page');

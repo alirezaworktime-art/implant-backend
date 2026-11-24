@@ -7,7 +7,7 @@ await h.call('manager', 'm1Rep', {});
 let r = await h.call('staff', 'fxArc', { id: '', by: 'م', ackDup: 1, ackFile: 1, arc: { v6: 1, name: 'بیمار گزارش', phone: '', nid: '', age: '40', city: 'یزد', doc: 'د. اکبر پور', pfile: '', pays: [], disc: {}, settled: false, rem: '', open: false,
   lines: [L('gbr1', 'د. اکبر پور', 3, 10500000, { t: { m: 'a', v: '2000000' } }), L('hard1', 'د.صادقی', 2, 8000000), L('gbr2', 'د.صادقی', 1, 10500000)] } });
 ok(r.ok, 'paper file saved', r);
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role, vw = 1400) => { const c = await b.newContext({ viewport: { width: vw, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.PE = []; p.on('pageerror', e => p.PE.push(e.message));
   await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3200); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return { p, c } };
 try {
@@ -37,7 +37,7 @@ try {
   await p.click('[data-drmap]'); await W(800); D = await p.evaluate(() => document.querySelectorAll('#drMapSh [data-drmk]').length); ok(D > 20, 'mapping table opens', D); await p.click('[data-drmapx]');
   await p.click('[data-drpre="w"]'); await W(1500); ok(await p.evaluate(() => DR.pk === 'w' && DR.d && DR.d.ok), 'period chips reload');
   ok(p.PE.length === 0, 'no page errors (manager)', p.PE);
-  await p.screenshot({ path: '/home/claude/w/m35/dr.png' });
+  await p.screenshot({ path: '/tmp/dr.png' });
   // level tariffs in settings
   await p.evaluate(() => { const t = document.getElementById('tabSet'); if (t) t.click() }); await W(1000);
   D = await p.evaluate(() => [...document.querySelectorAll('#set_prices [data-tp^="lv_"]')].map(i => i.dataset.tp)); ok(D.length === 12 && D.includes('lv_gbrb'), 'level tariffs listed in settings', D);

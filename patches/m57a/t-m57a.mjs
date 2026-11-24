@@ -1,17 +1,17 @@
 // t-m57a: All on X Korean; SMS line in the «think» PDF; consultant keeps several patients open. Run: WORKER=<m57a bundle> node t-m57a.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const PE = [];
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const PE = [];
 const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 700))); if (!c) bad++ };
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role, vw = 1280, vh = 860) => { const c = await b.newContext({ viewport: { width: vw, height: vh }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); p.on('dialog', d => d.dismiss()); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 try {
   // ---- (2) the number in settings
-  let r = await h.call('consultant', 'm57Sms', { op: 'set', v: '09120000000' }); ok(r.ok === false, 'only the manager sets the number', r);
+  let r = await h.call('consultant', 'm57Sms', { op: 'set', v: '09130000000' }); ok(r.ok === false, 'only the manager sets the number', r);
   let p = await login('manager'); ok(await p.evaluate(() => /---------- m57a \(/.test(document.documentElement.innerHTML)), 'm57a marker in the page');
   await p.evaluate(() => document.getElementById('tabSet').click()); await W(1500); ok(await p.evaluate(() => !!document.getElementById('m57sms')), 'settings has the SMS number field');
-  await p.evaluate(() => { document.getElementById('m57sms').value = '۰۹۱۲۰۰۰۰۰۰۰'; document.getElementById('sSave').click() }); await W(2500);
-  r = await h.call('staff', 'm57Sms', { op: 'get' }); ok(r.ok && r.v === '09120000000', 'saved with the settings (Persian digits accepted)', r);
+  await p.evaluate(() => { document.getElementById('m57sms').value = '۰۹۱۳۱۲۳۴۵۶۷'; document.getElementById('sSave').click() }); await W(2500);
+  r = await h.call('staff', 'm57Sms', { op: 'get' }); ok(r.ok && r.v === '09131234567', 'saved with the settings (Persian digits accepted)', r);
   r = await h.call('manager', 'm57Sms', { op: 'set', v: '12' }); ok(r.ok === false, 'a wrong number is refused', r); await p.context().close();
   // ---- patients
   const ids = []; for (const nm of ['بیمار اول', 'بیمار دوم', 'بیمار سوم']) { const id = await h.add(nm); await h.plan(id, nm); ids.push(id) }
@@ -42,7 +42,7 @@ try {
   const units = await p.evaluate(() => m57Units(F));
   await p.evaluate(() => openUndecided('')); await W(400); await p.click('#unWhy [data-unw]'); await p.click('#unGo'); await W(5000);
   v = await p.evaluate(() => ({ tb: window.__tb.filter(x => x[0] === 'برای شروع درمان'), dl: window.__dl, tabs: [...document.querySelectorAll('[data-m57o]')].map(x => x.dataset.m57o) }));
-  ok(units > 0 && v.tb.length === 1 && v.tb[0][1].includes('۰۹۱۲۰۰۰۰۰۰۰') && v.tb[0][1].includes('«بیمار سوم مایل به درمان ' + units.toLocaleString('fa-IR') + ' واحد ایمپلنت در یزد می‌باشم.»'), 'the «think» PDF carries the SMS text with name, units and the number', { units, tb: v.tb });
+  ok(units > 0 && v.tb.length === 1 && v.tb[0][1].includes('۰۹۱۳۱۲۳۴۵۶۷') && v.tb[0][1].includes('«بیمار سوم مایل به درمان ' + units.toLocaleString('fa-IR') + ' واحد ایمپلنت در یزد می‌باشم.»'), 'the «think» PDF carries the SMS text with name, units and the number', { units, tb: v.tb });
   ok(v.dl.length === 1 && v.dl[0].s > 1000 && !v.tabs.includes(ids[2]), 'the PDF downloads and the patient leaves the bar', v);
   // «lost» PDF has no SMS line
   await p.click(`[data-m57o="${ids[1]}"]`); await W(2200); await p.evaluate(() => { window.__tb = []; window.__dl = [] });

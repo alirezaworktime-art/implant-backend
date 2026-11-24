@@ -1,4 +1,5 @@
 #!/bin/bash
+W=${W:-$(cd "$(dirname "$0")/.." && pwd)}
 # builds m42 (staff accounts: several roles, shared password switch) for Iran and Cloudflare. Run in Git Bash.
 # The patch was built and tested on the sanitized copy; here it is only applied to the real bundles.
 set -e

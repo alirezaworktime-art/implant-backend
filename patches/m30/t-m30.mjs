@@ -18,12 +18,12 @@ try {
   // ---- B) tasks → appointments
   const tk = T(a).find(t => t.kind === 'book' && t.info === 'reimp'); ok(!!tk, 'B0 re-implant task exists', T(a));
   h.sql(`update tasks set due='${day(0)}' where id='${tk.id}'`);
-  let ap = await h.call('staff', 'apptSave', { appt: { plan: a, name: 'گزارش فیلد', phone: '09120000000', day: day(1), time: '10:00', dur: '120', kind: 'surg', doc: DOC, note: '', by: 'منشی', onl: '0' }, aid: '', task: tk.id, sendId: uuid() });
+  let ap = await h.call('staff', 'apptSave', { appt: { plan: a, name: 'گزارش فیلد', phone: '09131234567', day: day(1), time: '10:00', dur: '120', kind: 'surg', doc: DOC, note: '', by: 'منشی', onl: '0' }, aid: '', task: tk.id, sendId: uuid() });
   ok(ap.ok, 'B1 reception can book a surgery appointment from the re-implant task', ap);
   ok(T(a).find(t => t.id === tk.id).done === 1 || h.sql(`select count(*) c from appts where task='${tk.id}'`)[0].c === 1, 'B2 the task is linked to / closed by the appointment', [T(a), h.sql(`select id, task, st from appts where plan='${a}'`)]);
   r = await save('', { name: 'معاینه نوبت', open: true, type: 'fix', stage: 'exam', due: day(0), lines: [{ id: 'lb1', k: 'cbct', day: day(-3), doc: DOC, teeth: [], n: 1, price: 0 }] }); const b = r.id; ok(r.ok, 'setup exam file', r);
   const te = T(b).find(t => t.kind === 'aexam');
-  ap = await h.call('staff', 'apptSave', { appt: { plan: b, name: 'معاینه نوبت', phone: '09120000000', day: day(1), time: '11:00', dur: '20', kind: 'check', doc: DOC, note: '', by: 'منشی', onl: '0' }, aid: '', task: te.id, sendId: uuid() });
+  ap = await h.call('staff', 'apptSave', { appt: { plan: b, name: 'معاینه نوبت', phone: '09131234567', day: day(1), time: '11:00', dur: '20', kind: 'check', doc: DOC, note: '', by: 'منشی', onl: '0' }, aid: '', task: te.id, sendId: uuid() });
   ok(ap.ok, 'B3 «تعیین نوبت» for the exam task (kind check)', ap);
   const te2 = T(b).find(t => t.id === te.id), apx = h.sql(`select id, task, st, kind from appts where plan='${b}'`);
   ok(te2.done === 1 || apx.some(x => x.task === te.id), 'B4 exam task linked/closed', [te2, apx]);

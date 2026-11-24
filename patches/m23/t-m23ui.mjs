@@ -1,7 +1,7 @@
 // t-m23ui: the page asks before a past delivery date / a same-day impression, shows the paused-prosthesis warning on lab orders, and names «اصلاح» before the lab starts an edit. Run: WORKER=<bundle> node t-m23ui.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
 const rx0 = (await h.call('doctor', 'rxGet', {})).tpl;
 const toDis = async (name) => { const id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);
@@ -12,7 +12,7 @@ const ord = (f = 'tryin') => { const o = JSON.parse(JSON.stringify(REC.prosSess[
 const labsOf = id => h.sql(`select id, st, due from labs where plan='${id}' order by created`);
 const day = n => new Date(Date.parse(h.today() + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10);
 const pat = await toDis('بیمار تأیید'); await h.must('surgery', 'prosMap', { id: pat, map: { LR6: 'a', UR6: 'a' }, note: '', by: 'پزشک' });
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role, vw = 1366) => { const c = await b.newContext({ viewport: { width: vw, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.PE = []; p.on('pageerror', e => p.PE.push(e.message)); p.on('dialog', x => x.dismiss());
   await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const ask = async p => { for (let i = 0; i < 40; i++) { const t = await p.evaluate(() => { const s = document.getElementById('uxAskSh'); return s && !s.hidden ? { title: document.getElementById('uxAskT').textContent, msg: (s.querySelector('.uxmsg') || {}).textContent || '', ok: document.getElementById('uxAskOk').textContent, no: document.getElementById('uxAskNo').textContent } : null }); if (t) return t; await W(150) } return null };
@@ -46,9 +46,9 @@ try {
   ok(L.pz && L.pz.note === 'سفر' && /پروتز بیمار متوقف است/.test(L.spec) && /تماس دوباره/.test(L.spec) && /m23pz/.test(L.bd), 'lab: the order carries the warning (card + table badge)', L);
   ok(L.dom.length > 0 && /پروتز بیمار متوقف است/.test(L.dom[0]), 'lab: the warning is visible on the cartable', L.dom);
   const wide = await p.evaluate(() => { const e = document.querySelector('.m23pz'); if (!e) return null; const r = e.getBoundingClientRect(); return { w: Math.round(r.width), vis: !!e.offsetParent, over: document.documentElement.scrollWidth > innerWidth + 2 } }); ok(wide && wide.vis && !wide.over, 'badge is visible and the page does not overflow', wide);
-  await p.screenshot({ path: '/home/claude/w/m23/lab-paused.png' });
+  await p.screenshot({ path: '/tmp/lab-paused.png' });
   ok(p.PE.length === 0, 'lab: no page errors', p.PE); await p.context().close();
   p = await login('lab', 390); await W(1500); await p.evaluate(async () => { try { await pollLab(true) } catch (e) { } }); await W(500);
-  const mob = await p.evaluate(() => { const e = document.querySelector('.m23pz'); return { has: !!e, over: document.documentElement.scrollWidth - innerWidth } }); console.log('  mobile lab: badge', mob.has, 'overflow px', mob.over); await p.screenshot({ path: '/home/claude/w/m23/lab-paused-mobile.png' }); await p.context().close();
+  const mob = await p.evaluate(() => { const e = document.querySelector('.m23pz'); return { has: !!e, over: document.documentElement.scrollWidth - innerWidth } }); console.log('  mobile lab: badge', mob.has, 'overflow px', mob.over); await p.screenshot({ path: '/tmp/lab-paused-mobile.png' }); await p.context().close();
 } catch (e) { console.log('ERR', e.stack); bad++ }
 console.log(bad ? 'FAILED ' + bad : 'ALL OK'); await b.close(); h.stop(); process.exit(bad ? 1 : 0);

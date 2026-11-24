@@ -21,7 +21,7 @@ try {
   r = await raw(P1, 'undecided', { as: 'staff', id: 'x' }); ok(r.ok === false, 'staff cartable cannot do a consultant-only action', r && r.error);
   r = await raw(P2, 'ping'); ok(r.ok && r.role === 'surgery' && J(r.roles) === J(['surgery']), 'one-role account as before', r.role);
   // work is recorded under the person's own name, in the chosen role
-  { const nid = uuid(), q = JSON.parse(JSON.stringify(REC.queueAdd[0].req).split(REC.queueAdd[0].req.id).join(nid)); delete q.action; q.patient.nid = '1234567891'; q.patient.phone = '09120000000';
+  { const nid = uuid(), q = JSON.parse(JSON.stringify(REC.queueAdd[0].req).split(REC.queueAdd[0].req.id).join(nid)); delete q.action; q.patient.nid = '1234567891'; q.patient.phone = '09130000001';
     const qa = await raw(P1, 'queueAdd', { as: 'staff', ...q }); ok(qa.ok, 'the person registers a patient in the staff cartable', qa);
     const au = h.sql(`select user, role, action from audit order by n desc limit 1`)[0]; ok(au && au.user === 'کارمند چندنقشی' && au.role === 'staff' && au.action === 'queueAdd', 'change log carries the person and the chosen role', au); }
   // edit roles

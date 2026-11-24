@@ -1,4 +1,4 @@
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A; const h = await A.start();
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A; const h = await A.start();
 const name='بیمار کامل', id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);
 await h.must('consultant', 'payAdd', { id, pid: 'x-' + uuid(), pay: { kind: 'cash', pos: '', acct: '', part: 's', amount: 60000000, by: 'م', note: 'یادداشت پرداخت' }, sendId: uuid() }); await h.must('staff', 'toSurgery', { id });
 await h.surg(id, name, true);

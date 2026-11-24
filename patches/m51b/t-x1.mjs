@@ -1,5 +1,5 @@
 // exploration: what blocks discharge / delivery in the test flow
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { REC, uuid } = A;
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { REC, uuid } = A;
 const h = await A.start(); const OLD = REC.surgSave[0].req.id; const J = (x, n = 300) => JSON.stringify(x).slice(0, n);
 const rec = (k, i, id, extra) => { const q = JSON.parse(JSON.stringify(REC[k][i].req).split(OLD).join(id)); delete q.action; if (q.sendId) q.sendId = uuid(); return Object.assign(q, extra || {}) };
 try {
@@ -17,11 +17,11 @@ try {
   for (const b of [{}, { rx: ['a'] }, { rxc: 'x' }, { meds: [] }]) { r = await h.call('staff', 'discharge', Object.assign({ id, by: 'منشی' }, b)); console.log('discharge', J(b), '→', J(r)); if (r.ok) break }
   console.log(h.state(id), 'tasks', h.tasks(id).filter(t => !t.done).map(t => t.kind + '@' + t.due).join(','));
   // impression
-  await h.must('staff', 'apptSave', { appt: { plan: id, name: nm, phone: '09120000000', day: h.today(), time: '10:00', dur: '45', kind: 'impr', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() });
+  await h.must('staff', 'apptSave', { appt: { plan: id, name: nm, phone: '09131234567', day: h.today(), time: '10:00', dur: '45', kind: 'impr', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() });
   let ap = h.appts(id).filter(a => a.kind === 'impr' && a.st === 'set').pop(); await h.must('staff', 'apptRef', { aid: ap.id, op: 'set', id, by: 'منشی' }); await h.must('doctor', 'prosMap', rec('prosMap', 0, id));
   const lid = uuid(); r = await h.call('doctor', 'prosSess', rec('prosSess', 0, id, { aid: ap.id, lid, due: h.today() })); console.log('impr', J(r), h.state(id));
   // delivery without lab
-  await h.must('staff', 'apptSave', { appt: { plan: id, name: nm, phone: '09120000000', day: h.today(), time: '12:00', dur: '45', kind: 'deliv', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() });
+  await h.must('staff', 'apptSave', { appt: { plan: id, name: nm, phone: '09131234567', day: h.today(), time: '12:00', dur: '45', kind: 'deliv', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() });
   ap = h.appts(id).filter(a => a.kind === 'deliv' && a.st === 'set').pop(); await h.must('staff', 'apptRef', { aid: ap.id, op: 'set', id, by: 'منشی' });
   r = await h.call('doctor', 'prosSess', rec('prosSess', 2, id, { aid: ap.id })); console.log('deliv', J(r), h.state(id));
   if (!r.ok) { for (const st of ['making', 'ready', 'sent', 'done']) { const x = await h.call('lab', 'labSet', { lid, st, note: '', by: 'لابراتوار' }); console.log('labSet', st, J(x, 120)) } h.sql; r = await h.call('doctor', 'prosSess', rec('prosSess', 2, id, { aid: ap.id })); console.log('deliv2', J(r), h.state(id)) }

@@ -1,4 +1,5 @@
 #!/bin/bash
+W=${W:-$(cd "$(dirname "$0")/.." && pwd)}
 # builds m48a (page only: money separators, general-dentist consult flag, larger «درمان‌های انتخاب نشده», comments in PDFs, result-sheet bug) for Iran and Cloudflare. Run in Git Bash.
 # The patch was built and tested on the sanitized copy; here it is only applied to the real bundles.
 set -e

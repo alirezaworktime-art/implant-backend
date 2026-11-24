@@ -1,5 +1,5 @@
 // explore: does the clinic save keep custom keys / several «imp» sections / a sec on count services?
-const A = await import('file:///home/claude/w/audit/A.mjs'); const h = await A.start(); const J = (x, n = 3000) => JSON.stringify(x).slice(0, n);
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const h = await A.start(); const J = (x, n = 3000) => JSON.stringify(x).slice(0, n);
 try {
   let r = await h.call('accountant', 'oc', { op: 'load' }); const c = r.clinics.find(x => x.id === 'uni');
   const svc = c.svc.map(s => Object.assign({}, s)).concat([{ k: 'fx_z', n: 'فیکسچر زایگوما', p: 400000000, sec: 'imp' }, { k: 'sg_z', n: 'جراحی زایگوما', p: 400000000, sec: 'imp' }, { k: '', n: 'نسج نرم', p: 10000000, sec: '' }, { k: 'staff', n: 'پرسنل (ساعت)', p: 2240000, sec: '', zz: 1 }]);

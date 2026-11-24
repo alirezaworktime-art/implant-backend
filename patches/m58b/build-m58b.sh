@@ -1,4 +1,5 @@
 #!/bin/bash
+W=${W:-$(cd "$(dirname "$0")/.." && pwd)}
 # builds m58b (the lab order from the prosthesis card: nothing mandatory) on top of m58a. Run in Git Bash.
 # The patch was built and tested on the sanitized copy; here it is only applied to the real bundles.
 set -e

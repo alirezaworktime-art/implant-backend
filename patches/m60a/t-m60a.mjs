@@ -1,7 +1,7 @@
 // t-m60a: surgery day — «موجودی فیکسچر» (what we do not have by brand; diameter × length). Run: WORKER=<m60a bundle> node t-m60a.mjs
 import { createRequire } from 'node:module'; import fs from 'node:fs';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const PE = []; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 600))); if (!c) bad++ };
 const rx0 = (await h.call('doctor', 'rxGet', {})).tpl;
 const toDis = async (name) => { const id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);
@@ -11,7 +11,7 @@ const toDis = async (name) => { const id = await h.add(name); await h.plan(id, n
 const P = id => JSON.parse(h.sql(`select pros from plans where id='${id}'`)[0].pros || '{}');
 const labsOf = id => h.sql(`select id, st, due, data from labs where plan='${id}' order by created`).map(l => Object.assign(l, { data: JSON.parse(l.data || '{}') }));
 await h.travel(0); { const r = await h.call('manager', 'settings', { settings: { catalog: [{ b: 'IZEN', sys: '', g: 'ko', d: ['4', '4.5'], l: ['8', '10', '11.5'], h: [] }, { b: 'JD', sys: 'Plus', g: 'it', d: ['3.7', '4.3'], l: ['8', '10'], h: [] }, { b: 'JD', sys: 'Icon', g: 'it', d: ['3.5'], l: ['10', '13'], h: [] }] } }); if (!r || r.ok === false) console.log('catalog seed failed', r && r.error) }
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role, vw = 1280, vh = 800) => { const c = await b.newContext({ viewport: { width: vw, height: vh }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const sh = p => p.evaluate(() => { const s = document.querySelector('#m60Sheet'), q = x => s ? [...s.querySelectorAll(x)] : []; return { open: !!s && !s.hidden, txt: s ? s.innerText.replace(/\s+/g, ' ') : '', brands: q('[data-m60b].chip').map(b => b.textContent.trim()), on: q('.chip[aria-pressed="true"]').map(b => b.textContent.trim()), ok: q('td.ok').map(t => t.textContent), no: q('td.no').length, miss: q('.m60z').map(z => z.textContent) } });
 try {
@@ -40,8 +40,8 @@ try {
   // 4) phone
   const ph = await login('surgery', 390, 800); await ph.evaluate(async () => { await pollInv(true); $('m60Top').click() }); await W(600);
   await ph.evaluate(b => document.querySelector(`#m60Sheet [data-m60b="${b}"].chip`).click(), c.b); await W(300);
-  await ph.screenshot({ path: '/home/claude/w/m60a/phone.png' }); const ov = await ph.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1); ok(ov, 'phone: no page side scroll');
-  const ph2 = await login('surgery', 390, 800); await ph2.evaluate(async () => { await pollInv(true); $('m60Top').click() }); await W(600); await ph2.screenshot({ path: '/home/claude/w/m60a/phone-all.png' });
+  await ph.screenshot({ path: '/tmp/phone.png' }); const ov = await ph.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1); ok(ov, 'phone: no page side scroll');
+  const ph2 = await login('surgery', 390, 800); await ph2.evaluate(async () => { await pollInv(true); $('m60Top').click() }); await W(600); await ph2.screenshot({ path: '/tmp/phone-all.png' });
   ok(!PE.length, 'no page errors', PE);
 } catch (e) { console.log('ERR', String(e && e.stack || e).slice(0, 900)); bad++ }
 await b.close(); h.stop(); console.log(bad ? 'FAILED ' + bad : 'ALL OK'); process.exit(bad ? 1 : 0);

@@ -1,7 +1,7 @@
 // t-m34ui: paper file «پایه ایمپلنت» — «جدید / کاشت مجدد اول / دوم» are independent tabs. Run: WORKER=<bundle> node t-m34ui.mjs
 import { h, A, W, chromium } from '../m24/probe.mjs';
 let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 900))); if (!c) bad++ };
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const c = await b.newContext({ viewport: { width: 1400, height: 1000 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.PE = []; p.on('pageerror', e => p.PE.push(e.message));
 await p.goto(h.url); await p.click('[data-lrole="staff"]'); await p.fill('#lg_pw', A.PW.staff); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove()));
 const pickBrand = async () => { const st = await p.evaluate(() => ({ b: document.querySelectorAll('#arbSh [data-arbb]').length }));
@@ -36,7 +36,7 @@ try {
   const t1 = await p.evaluate(id => A6.lines.find(x => x.id === id).teeth.join(','), id1); ok(t0 === 'LL6,UR6' && t1 === 'LR7', 'changing «جدید» does not touch «کاشت مجدد اول»', { t0, t1 });
   const bill = await p.evaluate(() => [...document.querySelectorAll('#a6Tab tbody tr')].map(t => t.innerText.replace(/\s+/g, ' ')).filter(t => /ایمپلنت|مجدد/.test(t)));
   ok(bill.length >= 3, 'the bill has a row per tab', bill); ok(await p.evaluate(() => /پایه ایمپلنت ✓$/.test(document.querySelector('[data-a6k="imp"]').textContent.trim())), 'the side list shows one session', await p.evaluate(() => document.querySelector('[data-a6k="imp"]').textContent));
-  await p.screenshot({ path: '/home/claude/w/m34/tabs.png', fullPage: false });
+  await p.screenshot({ path: '/tmp/tabs.png', fullPage: false });
   // save and reopen
   await p.evaluate(() => { const i = [...document.querySelectorAll('#a6Root input')].find(x => x.closest('label') && /نام و نام خانوادگی/.test(x.closest('label').textContent)); i.value = 'تست تب‌ها'; i.dispatchEvent(new Event('input', { bubbles: true })) });
   await p.click('#a6Save'); await W(2500); if (await p.evaluate(() => !!UXA)) { await p.click('#uxAskOk'); await W(2500) }

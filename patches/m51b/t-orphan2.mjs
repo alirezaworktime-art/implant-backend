@@ -1,5 +1,5 @@
 // audit, prosthesis half: after surgery → impression → lab → delivery; if nobody acts, where is the patient? WORKER=<bundle> node t-orphan2.mjs
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { REC, uuid } = A;
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { REC, uuid } = A;
 const h = await A.start(); const OLD = REC.surgSave[0].req.id; const J = (x, n = 240) => JSON.stringify(x).slice(0, n);
 const body = id => { const q = JSON.parse(JSON.stringify(REC.surgSave[0].req).split(OLD).join(id)); delete q.action; q.session.at = new Date(Date.now() + h.off() * 864e5).toISOString(); q.sendId = uuid(); q.finish = true; return q };
 const show = async (tag, id) => console.log(tag.padEnd(30), '|', h.state(id), '|', (await h.where(id)).join(' ') || '*** NOWHERE ***', '| tasks:', h.tasks(id).filter(t => !t.done).map(t => t.kind + '@' + t.due.slice(2)).join(',') || '-', '| labs:', h.sql(`select st from labs where plan='${id}'`).map(x => x.st).join(',') || '-');
@@ -17,7 +17,7 @@ try {
   for (let i = 1; i < 5; i++) await dis(ids[i]);
   await show('+0 ' + N[1], ids[1]);
   // impression for P3..P5
-  const impr = async id => { const aid = uuid(); let r = await h.call('staff', 'apptSave', { appt: { plan: id, name: 'ن', phone: '09120000000', day: h.today(), time: '10:00', dur: '45', kind: 'impr', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() }); const ap = h.appts(id).filter(a => a.kind === 'impr' && a.st === 'set').pop();
+  const impr = async id => { const aid = uuid(); let r = await h.call('staff', 'apptSave', { appt: { plan: id, name: 'ن', phone: '09131234567', day: h.today(), time: '10:00', dur: '45', kind: 'impr', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() }); const ap = h.appts(id).filter(a => a.kind === 'impr' && a.st === 'set').pop();
     const r1 = await h.call('staff', 'apptRef', { aid: ap.id, op: 'set', id, by: 'منشی' }); const r2 = await any(['doctor', 'surgery', 'staff'], 'prosMap', rec('prosMap', 0, id)); const lid = uuid();
     const r3 = await any(['doctor', 'surgery', 'staff'], 'prosSess', rec('prosSess', 0, id, { aid: ap.id, lid, due: new Date(Date.parse(h.today()) + 10 * 864e5).toISOString().slice(0, 10) }));
     console.log('impr:', 'appt', J(r, 60), 'ref', J(r1, 60), 'map', J(r2, 80), 'sess', J(r3, 200)); return lid };
@@ -25,7 +25,7 @@ try {
   const lab = async lid => { const a = await h.call('lab', 'labStart', { lid, wt: '99' + Math.floor(Math.random() * 9000 + 1000), proc: '', from: '', designer: '', box: '', note: '', prio: '' }); const b = await h.call('lab', 'labSet', { lid, st: 'ready', note: '', by: 'لابراتوار' }); console.log('lab:', J(a, 150), J(b, 150)) };
   await lab(L[3]); await lab(L[4]);
   // P5: delivery
-  { const id = ids[4]; await h.call('staff', 'apptSave', { appt: { plan: id, name: 'ن', phone: '09120000000', day: h.today(), time: '12:00', dur: '45', kind: 'deliv', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() }); const ap = h.appts(id).filter(a => a.kind === 'deliv' && a.st === 'set').pop();
+  { const id = ids[4]; await h.call('staff', 'apptSave', { appt: { plan: id, name: 'ن', phone: '09131234567', day: h.today(), time: '12:00', dur: '45', kind: 'deliv', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() }); const ap = h.appts(id).filter(a => a.kind === 'deliv' && a.st === 'set').pop();
     const r1 = ap ? await h.call('staff', 'apptRef', { aid: ap.id, op: 'set', id, by: 'منشی' }) : { ok: false, error: 'no deliv appt' }; const r3 = ap ? await any(['doctor', 'surgery', 'staff'], 'prosSess', rec('prosSess', 2, id, { aid: ap.id })) : {}; console.log('deliv:', J(r1, 80), J(r3, 260)) }
   for (const d of [0, 1, 15, 45, 130, 200, 400]) { if (d) await h.travel(d - h.off()); console.log('\n===== روز +' + d); for (let i = 0; i < 5; i++) await show(N[i], ids[i]) }
 } catch (e) { console.log('ERR', String(e && e.stack || e).slice(0, 900)) }

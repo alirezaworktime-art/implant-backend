@@ -1,4 +1,5 @@
 #!/bin/bash
+W=${W:-$(cd "$(dirname "$0")/.." && pwd)}
 # builds m44a (surgery sheet: early failure + implant on one tooth = two fixtures; page + server) for Iran and Cloudflare. Run in Git Bash.
 # The patch was built and tested on the sanitized copy; here it is only applied to the real bundles.
 set -e

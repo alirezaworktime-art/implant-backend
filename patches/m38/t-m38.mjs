@@ -1,5 +1,5 @@
 // m38 server test: surgery appointment «نیامد»/«لغو» while the patient waits in the surgery cartable; resend of the same session is recorded once.
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A; const h = await A.start();
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A; const h = await A.start();
 let bad = 0; const ok = (c, t) => { console.log((c ? 'ok   ' : 'FAIL ') + t); if (!c) bad++; };
 const OLD = REC.queueAdd[0].req.id;
 const ready = async (name) => { const id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);

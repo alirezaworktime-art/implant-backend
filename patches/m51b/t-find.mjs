@@ -1,11 +1,11 @@
 // repro: a saved paper file must be findable in the archive list. WORKER=<bundle> node t-find.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href);
 const W = ms => new Promise(r => setTimeout(r, ms)); const h = await A.start();
 try {
   for (let i = 0; i < 3; i++) { const id = await h.add('قدیمی ' + i); await h.plan(id, 'قدیمی ' + i) }
-  const br = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+  const br = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
   const c = await br.newContext({ viewport: { width: 1180, height: 860 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, x => x.abort()); const p = await c.newPage(); const PE = []; p.on('pageerror', e => PE.push(e.message.slice(0, 200)));
   await p.goto(h.url); await p.click('[data-lrole="staff"]'); await p.fill('#lg_pw', A.PW.staff); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove()));
   for (const [nm, pf] of [['کاغذی الف', '7001'], ['کاغذی ب', '7002']]) {

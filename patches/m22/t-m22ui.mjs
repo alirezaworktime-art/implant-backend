@@ -1,7 +1,7 @@
 // t-m22ui: Root as the fifth group in the plan form; hand-over sheet; re-delivery / re-heal choices. Run: WORKER=<bundle> node t-m22ui.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
 const rx0 = (await h.call('doctor', 'rxGet', {})).tpl;
 const toDis = async (name) => { const id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);
@@ -9,7 +9,7 @@ const toDis = async (name) => { const id = await h.add(name); await h.plan(id, n
   const q = JSON.parse(JSON.stringify(REC.surgSave[0].req).split(REC.queueAdd[0].req.id).join(id)); delete q.action; q.session.at = new Date().toISOString(); q.sendId = uuid(); q.finish = true; await h.must('surgery', 'surgSave', q);
   await h.must('staff', 'rxGive', { id, ids: [rx0.items[0].id], by: 'منشی' }); await h.must('staff', 'fxFile', { op: 'set', id, file: String(2000 + Math.floor(Math.random() * 7000)), by: 'منشی' }); await h.call('staff', 'discharge', { id, by: 'منشی' }); return id };
 const wait = await h.add('روت در طرح'); await h.plan(wait, 'روت در طرح'); const pat = await toDis('واگذاری پروتز');
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role, vw = 1366) => { const c = await b.newContext({ viewport: { width: vw, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.PE = []; p.on('pageerror', e => p.PE.push(e.message)); p.on('dialog', x => x.dismiss());
   await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 try {
@@ -22,7 +22,7 @@ try {
   await p.evaluate(() => { AS().imp.sel.UR6 = true; recalc() }); await W(400);
   const form = await p.evaluate(() => { const bt = document.getElementById('brandTotals'); return { open: !document.getElementById('viewForm').hidden, n: bt ? bt.querySelectorAll('[data-brand]').length : -1, rt: bt ? !!bt.querySelector('[data-brand="rt"]') : false, inp: !!document.getElementById('bp_imp_rt'), val: (document.getElementById('bp_imp_rt') || {}).value } });
   ok(form.open && form.n >= 5 && form.rt && form.inp && /21,000,000/.test(String(form.val)), 'plan form: Root total button and Root tariff box (21,000,000)', form);
-  await p.evaluate(() => { const el = document.getElementById('brandTotals'); if (el) el.scrollIntoView({ block: 'center' }) }); await W(300); await p.screenshot({ path: '/home/claude/w/oc/m22-totals.png' });
+  await p.evaluate(() => { const el = document.getElementById('brandTotals'); if (el) el.scrollIntoView({ block: 'center' }) }); await W(300); await p.screenshot({ path: '/tmp/m22-totals.png' });
   const ov = await p.evaluate(() => { const bt = document.getElementById('brandTotals'); if (!bt) return null; const r = bt.getBoundingClientRect(); return { w: Math.round(r.width), sw: bt.scrollWidth, vw: innerWidth, right: Math.round(r.right), left: Math.round(r.left) } });
   ok(ov && ov.sw <= ov.w + 2 && ov.left >= 0 && ov.right <= ov.vw + 1, 'five totals fit the row (no overflow)', ov);
   ok(await p.evaluate(() => { const r = { s: AS(), brand: 'rt', pay: (F && F.pay) || {} }; const tb = totalsBlock(Object.assign({}, F, { brand: 'rt' })); return tb && tb.h > 44 * 6 }), 'PDF totals block has a row for every brand incl. Root');
@@ -52,7 +52,7 @@ try {
   await p.evaluate(() => fxArcOpen(null)); await W(2000);
   const a6 = await p.evaluate(() => { if (typeof A6 === 'undefined' || !A6) return { open: false }; A6.op.add('heal2'); const l1 = a6NewLine('heal2'); A6.op.add('pros'); const l2 = a6NewLine('pros'); l2.ty = 'deliv2'; l2.redo = true; a6Render(); const R = document.getElementById('a6Root'), q = id => R.querySelector(`[data-a6f="price"][data-l="${id}"]`); return { open: true, btn: !!R.querySelector('[data-a6k="heal2"]'), p1: q(l1.id) ? !q(l1.id).disabled : null, p2: q(l2.id) ? !q(l2.id).disabled : null, redoQ: /مجدد بوده/.test(R.querySelector(`.a6l[data-l="${l2.id}"]`).innerHTML), redo: l2.redo, lab: a6Lab(l2) } });
   ok(a6.open && a6.btn && a6.p1 === true && a6.p2 === true && !a6.redoQ && a6.redo === false && /تحویل مجدد روکش نهایی/.test(a6.lab), 'paper file form: both new lines have an editable amount', a6);
-  await p.screenshot({ path: '/home/claude/w/oc/m22-arc.png' });
+  await p.screenshot({ path: '/tmp/m22-arc.png' });
   ok(p.PE.length === 0, 'reception: no page errors', p.PE); await p.context().close();
 } catch (e) { console.log('ERR', e.stack); bad++ }
 console.log(bad ? 'FAILED ' + bad : 'ALL OK'); await b.close(); h.stop(); process.exit(bad ? 1 : 0);

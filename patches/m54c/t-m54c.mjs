@@ -1,7 +1,7 @@
 // t-m54c (server + page; m54a without the extra fields). Run: WORKER=<m54c bundle> node --import sameday-shim t-m54a.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { REC, uuid } = A;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { REC, uuid } = A;
 let bad = 0; const J = (x, n = 420) => String(JSON.stringify(x)).slice(0, n); const W = ms => new Promise(r => setTimeout(r, ms)); const PE = [];
 const ok = (c, t, x) => { console.log((c ? 'ok   ' : 'FAIL ') + t + (c || x === undefined ? '' : ' ' + J(x))); if (!c) bad++ };
 const h = await A.start(); const OLD = REC.surgSave[0].req.id;
@@ -12,7 +12,7 @@ const base = async (nm, payAll = true, fin = true) => { const id = await h.add(n
   const tot = Number(h.sql(`select total from plans where id='${id}'`)[0].total), pt = JSON.parse(h.sql(`select data from plans where id='${id}'`)[0].data).parts || {};
   await h.must('consultant', 'payAdd', { id, pid: 'x-' + uuid(), pay: { kind: 'cash', pos: '', acct: '', part: 's', amount: payAll ? tot : Math.round(pt.S * tot / (pt.S + pt.P)), by: 'م', note: '' }, sendId: uuid() });
   await h.must('staff', 'toSurgery', { id }); if (fin === null) return id; const q = rec('surgSave', 0, id); q.session.at = new Date(Date.now() + h.off() * 864e5).toISOString(); q.finish = true; q.actual = tot; q.planned = tot; await h.must('surgery', 'surgSave', q); return id };
-const br = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const br = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async role => { const c = await br.newContext({ viewport: { width: 1280, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); p.on('dialog', x => x.dismiss()); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 try {
   // ---------- W1 cheque
@@ -25,9 +25,9 @@ try {
   const gap = Math.round((Date.parse(im.due) - Date.parse(h.today())) / 864e5); await h.travel(gap + 20); let wb = await h.call('staff', 'winback', {}); ok(!(wb.items || []).some(x => x.id === w1), '20 days overdue: not yet in win-back');
   await h.travel(15); wb = await h.call('staff', 'winback', {}); const it = (wb.items || []).find(x => x.id === w1); ok(it && it.kind === 'pros' && it.since === im.due, '35 days overdue: the patient is in «بازگشت بیماران»', it);
   // ---------- W3 payok
-  const p1 = await base('تحویل بدهکار', false); await h.must('staff', 'apptSave', { appt: { plan: p1, name: 'ن', phone: '09120000000', day: h.today(), time: '10:00', dur: '45', kind: 'impr', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() });
+  const p1 = await base('تحویل بدهکار', false); await h.must('staff', 'apptSave', { appt: { plan: p1, name: 'ن', phone: '09131234567', day: h.today(), time: '10:00', dur: '45', kind: 'impr', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() });
   let ap = h.appts(p1).filter(a => a.kind === 'impr' && a.st === 'set').pop(); await h.must('staff', 'apptRef', { aid: ap.id, op: 'set', id: p1, by: 'منشی' }); await h.must('doctor', 'prosMap', rec('prosMap', 0, p1)); await h.must('doctor', 'prosSess', rec('prosSess', 0, p1, { aid: ap.id, lid: uuid(), due: day(10) }));
-  await h.must('staff', 'apptSave', { appt: { plan: p1, name: 'ن', phone: '09120000000', day: h.today(), time: '12:00', dur: '45', kind: 'deliv', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() });
+  await h.must('staff', 'apptSave', { appt: { plan: p1, name: 'ن', phone: '09131234567', day: h.today(), time: '12:00', dur: '45', kind: 'deliv', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() });
   ap = h.appts(p1).filter(a => a.kind === 'deliv' && a.st === 'set').pop(); await h.must('staff', 'apptRef', { aid: ap.id, op: 'set', id: p1, by: 'منشی' }); r = await h.call('doctor', 'prosSess', rec('prosSess', 2, p1, { aid: ap.id, labAck: 1 }));
   ok(r.ok === false && open(p1, 'payok').length === 1, 'delivery with a debt waits for «payok»', r); await h.travel(2); await tick(); ok(!open(p1, 'payokl').length, 'two days: no reminder yet');
   await h.travel(2); await tick(); ok(open(p1, 'payokl').length === 1, 'after three days: reminder task «payokl»', T(p1, 'payokl')); await h.travel(1); await tick(); ok(T(p1, 'payokl').length === 1, 'only once');

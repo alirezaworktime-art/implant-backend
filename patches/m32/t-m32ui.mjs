@@ -4,7 +4,7 @@ let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m +
 const mkS = async name => { const id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);
   await h.must('consultant', 'payAdd', { id, pid: 'x-' + uuid(), pay: { kind: 'cash', pos: '', acct: '', part: 's', amount: 60000000, by: 'م', note: '' }, sendId: uuid() }); await h.must('staff', 'toSurgery', { id }); return id };
 await mkS('بیمار جستجو');
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role, vw = 1400, touch = false) => { const c = await b.newContext({ viewport: { width: vw, height: touch ? 780 : 1000 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran', hasTouch: touch, isMobile: touch }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.PE = []; p.on('pageerror', e => p.PE.push(e.message));
   await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3200); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const openImpSheet = async p => { await p.evaluate(() => goTile('surg')); await W(900); await p.evaluate(n => { const x = QITEMS.find(q => q.name === n); openSurg(x) }, 'بیمار جستجو'); await W(1500); await p.click('[data-m31pf]'); await W(400); await p.click('#m31Pf button.t[data-m31t="LL5"]'); await W(700) };
@@ -71,20 +71,20 @@ try {
     S = await p.evaluate(id => ({ pk: !!document.querySelector('.m32ov'), ux: !!UXA && !UXA.s.hidden, i: document.getElementById(id).selectedIndex }), dlg.id); ok(!S.pk && S.ux && S.i >= 0, 'Enter in the picker chooses; the dialog stays open', S);
     await p.keyboard.press('Escape'); await W(300); ok(await p.evaluate(() => !UXA), 'a second Esc closes the dialog as before') }
   ok(p.PE.length === 0, 'no page errors (desktop)', p.PE);
-  await p.screenshot({ path: '/home/claude/w/m32/desk.png' });
+  await p.screenshot({ path: '/tmp/desk.png' });
   // (5) phone, touch
   const q = await login('surgery', 390, true); await openImpSheet(q);
   await q.tap('#imp_cat'); await W(400); S = await pk(q);
   ok(S && S.n === 1 && S.focus !== 'm32q', 'phone: a tap on a list inside a window opens the picker (short list: the keyboard does not pop up)', S);
   const box = await q.evaluate(() => { const r = document.querySelector('.m32p').getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom, w: innerWidth, h: innerHeight, sw: document.documentElement.scrollWidth } });
   ok(box.l >= 0 && box.r <= box.w && box.b <= box.h && box.sw <= box.w, 'phone: the picker fits the screen', box);
-  await q.screenshot({ path: '/home/claude/w/m32/phone.png' });
+  await q.screenshot({ path: '/tmp/phone.png' });
   await q.tap('.m32x'); await W(300); ok(await q.evaluate(() => !document.querySelector('.m32ov') && !document.getElementById('impSheet').hidden), 'phone: closing the picker leaves the window under it open');
   await q.tap('#imp_cat'); await W(300); await q.tap('.m32o'); await W(400);
   ok(await q.evaluate(() => !document.querySelector('.m32ov') && document.getElementById('imp_cat').value === 'm' && !document.getElementById('impSheet').hidden), 'phone: a tap on an item chooses it');
   await q.evaluate(() => { const s = document.getElementById('imp_cat'); let o = ''; for (let i = 0; i < 40; i++) o += `<option value="b${i}">برند ${i}</option>`; s.insertAdjacentHTML('beforeend', o) }); await q.tap('#imp_cat'); await W(400); S = await pk(q);
   ok(S && S.n === 41 && S.focus === 'm32q', 'phone: a long list puts the cursor in the search box', S); await q.keyboard.type('برند ۳۷'); await W(200); S = await pk(q); ok(S && S.vis.join() === 'برند 37', 'phone: search works', S && S.vis);
-  await q.screenshot({ path: '/home/claude/w/m32/phone2.png' }); await q.keyboard.press('Escape'); await W(200); ok(await q.evaluate(() => !document.querySelector('.m32ov') && !document.getElementById('impSheet').hidden), 'phone: Esc closes only the picker');
+  await q.screenshot({ path: '/tmp/phone2.png' }); await q.keyboard.press('Escape'); await W(200); ok(await q.evaluate(() => !document.querySelector('.m32ov') && !document.getElementById('impSheet').hidden), 'phone: Esc closes only the picker');
   ok(q.PE.length === 0, 'no page errors (phone)', q.PE);
 } catch (e) { console.log('FAIL exception', e.stack) ; bad++ }
 await b.close(); console.log(bad ? 'FAILED ' + bad : 'ALL OK'); process.exit(bad ? 1 : 0);

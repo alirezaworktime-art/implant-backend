@@ -1,6 +1,6 @@
 // t-m40ui: cartable of a plain lab employee (browser). Run: WORKER=<m40 bundle> node t-m40ui.mjs
 import { createRequire } from 'node:module'; import * as A from '../audit/A.mjs';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0;
 const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
 const raw = async (pw, action, body = {}) => (await fetch(h.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, password: pw, ...body }) })).json();
@@ -11,7 +11,7 @@ await mk('پذیرش آزمایشی', P.R, { depts: [], recep: 1 }); await mk('�
 D0 = await h.call('lab', 'labDefs', { op: 'get' }); const U = n => D0.staff.find(s => s.name === n).id;
 const mkO = async (name, who) => { const r = await raw(P.R, 'lab4New', { id: '', name, clinic: 'کلینیک نمونه', lid: A.uuid(), sendId: A.uuid(), order: { teeth: ['UR6', 'UR5'] } }); await raw(P.R, 'labStart', { lid: r.id, wt: 101, proc: '', from: '', designer: '', box: '', note: '', prio: '' }); if (who) { const st = (await raw(P.R, 'labOrder', { lid: r.id })).steps; await raw(P.R, 'labStep', { lid: r.id, sid: st[0].id, op: 'assign', uid: U(who) }) } return r.id };
 const O1 = await mkO('بیمار نمونه یک', 'ساخت الف'), O2 = await mkO('بیمار نمونه دو', 'ساخت الف'), O3 = await mkO('بیمار نمونه سه', 'ساخت ب'), O4 = await mkO('بیمار نمونه چهار', '');
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [], DENY = [];
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [], DENY = [];
 const login = async (pw, vw) => { const c = await b.newContext({ viewport: { width: vw, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200)));
   p.on('response', async r => { try { if (r.request().method() === 'POST') { const j = await r.json(); if (j && j.m40 === 1 && j.ok === false) { const q = JSON.parse(r.request().postData()); DENY.push(q.action + ':' + (q.op || '')) } } } catch (e) { } });
   await p.goto(h.url); await p.click('[data-lrole="lab"]'); await p.fill('#lg_pw', pw); await p.click('#lgGo'); await W(4000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return { p, c } };

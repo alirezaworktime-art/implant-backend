@@ -1,15 +1,15 @@
 // t-m17: consultant «مردد» / «انصراف» / «تصمیم نگرفت» → plan PDF downloads after a successful save; failed save → no PDF; «نوبت‌دهی» still downloads. Run: WORKER=<bundle> node t-m17.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const { start, PW } = await import('file:///home/claude/w/h/h.mjs');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const { start, PW } = await import(new URL('../h/h.mjs', import.meta.url).href);
 const h = await start(); let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(x).slice(0, 400))); if (!c) bad++ };
 const W = ms => new Promise(r => setTimeout(r, ms));
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async role => { const c = await b.newContext({ viewport: { width: 1366, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran', acceptDownloads: true }); await c.route(/googleapis|gstatic/, r => r.abort());
   const p = await c.newPage(); p.PE = []; p.on('pageerror', e => p.PE.push(e.message)); p.on('dialog', d => d.dismiss());
   await p.goto(h.url); await p.click(`[data-lrole="${role}"]`).catch(() => { }); await p.fill('#lg_pw', PW[role]); await p.click('#lgGo'); await W(2500); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const doc = await login('doctor');
-const mk = name => doc.evaluate(async name => { const f = blankForm(); f.h.name = name; f.h.phone = '09120000000'; f.h.nid = '4430000000'; const d = toDoc(f); d.updatedAt = new Date().toISOString(); const id = uuid();
+const mk = name => doc.evaluate(async name => { const f = blankForm(); f.h.name = name; f.h.phone = '09131112233'; f.h.nid = '4430000000'; const d = toDoc(f); d.updatedAt = new Date().toISOString(); const id = uuid();
   const j = await api('toConsult', { record: { id, data: d, name, nid: f.h.nid, status: 'draft', total: 0 }, sendId: uuid() }); return j.id || id }, name);
 const P = { think: await mk('بیمار مردد'), lost: await mk('بیمار انصراف'), btn: await mk('بیمار تصمیم‌نگرفت'), fail: await mk('بیمار خطا'), book: await mk('بیمار نوبت') };
 ok(h.sql(`select count(*) n from plans where queue='consult'`)[0].n === 5, '5 plans in the consultant inbox', JSON.stringify(h.sql('select name,queue from plans')));

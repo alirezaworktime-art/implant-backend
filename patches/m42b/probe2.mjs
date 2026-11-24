@@ -1,4 +1,4 @@
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A; const h = await A.start();
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A; const h = await A.start();
 const n1 = 'بیمار عادی', id1 = await h.add(n1); await h.plan(id1, n1);
 let g = await h.call('staff', 'get', { id: id1 }); const show = g => Object.fromEntries(Object.entries(g).filter(([k, v]) => !['data', 'settings', 'tasks', 'appts', 'notes'].includes(k)).map(([k, v]) => [k, typeof v === 'object' ? JSON.stringify(v).slice(0, 80) : v]));
 console.log('SENT', JSON.stringify(show(g)));

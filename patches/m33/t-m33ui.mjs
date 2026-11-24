@@ -2,10 +2,10 @@
 import { h, A, W, chromium } from '../m24/probe.mjs'; import { uuid } from '../audit/A.mjs';
 let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 700))); if (!c) bad++ };
 const DOC = 'د. اکبر پور', day = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
-const r0 = await h.call('staff', 'fxArc', { id: '', by: 'منشی', ackDup: 1, ackFile: 1, arc: { v6: 1, name: 'مریم صادقی', phone: '09120000000', nid: '', age: '33', city: 'یزد', doc: DOC, pfile: '6602', pays: [], disc: {}, settled: false, rem: '', open: false,
+const r0 = await h.call('staff', 'fxArc', { id: '', by: 'منشی', ackDup: 1, ackFile: 1, arc: { v6: 1, name: 'مریم صادقی', phone: '09135556677', nid: '', age: '33', city: 'یزد', doc: DOC, pfile: '6602', pays: [], disc: {}, settled: false, rem: '', open: false,
   lines: [{ id: 'lext9', k: 'ext', day: day(-20), doc: DOC, teeth: ['LL8'], n: 1, price: 800000 }] } });
 const pid = r0.id;
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role, vw = 1400) => { const c = await b.newContext({ viewport: { width: vw, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.PE = []; p.on('pageerror', e => p.PE.push(e.message));
   await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3200); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 try {
@@ -19,7 +19,7 @@ try {
   await s.click('#a6Save'); await W(1800);
   let D = await s.evaluate(() => UXA ? { t: document.getElementById('uxAskT').textContent, body: document.getElementById('uxAskSh').innerText.replace(/\s+/g, ' '), ok: document.getElementById('uxAskOk').textContent, no: document.getElementById('uxAskNo').textContent, li: document.querySelectorAll('#uxAskSh .m33dup li').length } : null);
   ok(D && /مشابه/.test(D.t) && D.li === 1 && /پرونده ۶۶۰۲/.test(D.body) && /موبایل …۶۶۷۷/.test(D.body) && /یکسان: نام/.test(D.body) && D.ok === 'بیمار دیگری است، ثبت شود' && /همان بیمار/.test(D.no), 'the question lists the found patient (file, mobile end, what matched) with clear buttons', D);
-  await s.screenshot({ path: '/home/claude/w/m33/dup.png' });
+  await s.screenshot({ path: '/tmp/dup.png' });
   await s.click('#uxAskOk'); await W(2500);
   ok(h.sql("select count(*) n from plans where name='مریم صادقی'")[0].n === 2, '«بیمار دیگری است، ثبت شود» saves the namesake');
   ok(s.PE.length === 0, 'no page errors (reception)', s.PE);
@@ -32,7 +32,7 @@ try {
   await p.click('#pfActs [data-m33del]'); await W(1200);
   D = await p.evaluate(() => UXA ? { t: document.getElementById('uxAskT').textContent, m: document.getElementById('uxAskSh').innerText.replace(/\s+/g, ' ') } : null);
   ok(D && D.t === 'حذف کامل پرونده' && /مریم صادقی/.test(D.m) && /۶۶۰۲/.test(D.m) && /۳۰ روز/.test(D.m), 'the question names the patient and the 30-day trash', D);
-  await p.screenshot({ path: '/home/claude/w/m33/del.png' });
+  await p.screenshot({ path: '/tmp/del.png' });
   await p.click('#uxAskNo'); await W(500); ok(h.sql(`select count(*) n from plans where id='${pid}'`)[0].n === 1, '«انصراف» deletes nothing');
   await p.click('#pfActs [data-m33del]'); await W(1200); await p.click('#uxAskOk'); await W(2500);
   ok(h.sql(`select count(*) n from plans where id='${pid}'`)[0].n === 0, '«حذف کامل» deletes the file');
@@ -41,7 +41,7 @@ try {
   await p.click('[data-m33trash]'); await W(1200);
   D = await p.evaluate(() => { const s = document.getElementById('m33Sh'); return s && !s.hidden ? { rows: s.querySelectorAll('.m33row').length, t: s.innerText.replace(/\s+/g, ' ') } : null });
   ok(D && D.rows === 1 && /مریم صادقی/.test(D.t) && /۶۶۰۲/.test(D.t), 'the trash lists the deleted file', D);
-  await p.screenshot({ path: '/home/claude/w/m33/trash.png' });
+  await p.screenshot({ path: '/tmp/trash.png' });
   await p.click('[data-m33rest]'); await W(900); await p.click('#uxAskOk'); await W(2500);
   ok(h.sql(`select count(*) n from plans where id='${pid}'`)[0].n === 1, '«بازگردانی» brings it back');
   D = await p.evaluate(() => ({ rows: document.querySelectorAll('#m33Sh .m33row').length, bar: document.getElementById('m33Bar').hidden }));

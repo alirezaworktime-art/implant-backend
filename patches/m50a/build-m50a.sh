@@ -1,4 +1,5 @@
 #!/bin/bash
+W=${W:-$(cd "$(dirname "$0")/.." && pwd)}
 # builds m50a (reception task for the general-dentist consult, open amount on the discharge card, difference settlement form; page + server) for Iran and Cloudflare. Run in Git Bash.
 # The patch was built and tested on the sanitized copy; here it is only applied to the real bundles.
 set -e

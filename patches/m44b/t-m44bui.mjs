@@ -1,13 +1,13 @@
 // t-m44bui: paper file — «فیل اولیه» + second fixture on the same tooth as its own implant row. Run: WORKER=<m44b bundle> node t-m44bui.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0;
 const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 700))); if (!c) bad++ };
 await h.must('manager', 'settings', { settings: { catalog: [{ b: 'IZEN', sys: '', g: 'ko', d: ['4', '4.5'], l: ['8', '10'], h: [] }, { b: 'Root', sys: '', g: 'rt', d: ['4', '5'], l: ['9', '11'], h: [] }], prices: { imp: { price: '', bp: { ir: '8000000', ko: '10000000', it: '15000000', sw: '20000000', rt: '21000000' } } } } });
 const stock = () => Object.fromEntries(h.sql(`select b, d, l, qty from inv_items where kind='fix'`).map(r => [[r.b, r.d, r.l].join('/'), r.qty]));
 const diff = (a, b) => { const o = {}; for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) { const d = (b[k] || 0) - (a[k] || 0); if (d) o[k] = d } return o };
 const old = new Date(Date.now() - 40 * 864e5).toISOString().slice(0, 10);
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [];
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [];
 const login = async (role, vw = 1280, vh = 800) => { const c = await b.newContext({ viewport: { width: vw, height: vh }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const setFix = (p, b, d, l) => p.evaluate(({ b, d, l }) => { const P = ARB.p; P.b = b; P.c = arbCat(b); P.ob = P.c ? '' : b; P.d = d; P.len = l }, { b, d, l });
 try {
@@ -37,7 +37,7 @@ try {
       // what goes to the server, then the real save and the store
       const lines = await p.evaluate(async () => { const of = window.fetch; let body = null; window.fetch = async (u, o) => { try { const j = JSON.parse(o.body); if (j.action === 'fxArc') { body = j; return new Response(JSON.stringify({ ok: false, error: 'test' }), { headers: { 'content-type': 'application/json' } }) } } catch (e) { } return of(u, o) };
         try { await api('fxArc', { arc: { v6: 1, lines: A6.lines.map(l => ({ id: l.id, k: l.k, day: l.day, doc: l.doc, teeth: l.teeth, n: num(l.n), price: num(l.price), sut: l.sut || '', txt: '', note: '', fp: l.fp, imp: Object.fromEntries(l.teeth.map(t => [t, { b: (l.imp[t] || {}).b, d: (l.imp[t] || {}).d, l: (l.imp[t] || {}).l }])) })) } }) } catch (e) { } window.fetch = of; return body && body.arc.lines });
-      const S0 = stock(); const r = await h.call('staff', 'fxArc', { id: '', by: 'منشی', ackDup: 1, ackFile: 1, arc: { v6: 1, name: 'بیمار دو فیکسچر', phone: '09120000000', nid: '', age: '40', city: 'یزد', doc: 'دکتر نمونه', pfile: '', lines, pays: [], disc: {}, settled: false, rem: '' } });
+      const S0 = stock(); const r = await h.call('staff', 'fxArc', { id: '', by: 'منشی', ackDup: 1, ackFile: 1, arc: { v6: 1, name: 'بیمار دو فیکسچر', phone: '09131112233', nid: '', age: '40', city: 'یزد', doc: 'دکتر نمونه', pfile: '', lines, pays: [], disc: {}, settled: false, rem: '' } });
       ok(r.ok, 'the rows built by the page are accepted by the server', r); const d = diff(S0, stock());
       ok(d['IZEN/4/10'] === -2 && d['Root/5/11'] === -1 && d['IZEN/4/8'] === -1 && Object.keys(d).length === 3, 'store: failed fixtures and the second fixture each leave their own item', d);
       const tot = h.sql(`select total from plans where id='${r.id}'`)[0].total; ok(tot === 31000000, 'file total: 10,000,000 (UR5) + 21,000,000 (second fixture); failed ones 0', tot);

@@ -5,7 +5,7 @@ const mkS = async name => { const id = await h.add(name); await h.plan(id, name)
   await h.must('consultant', 'payAdd', { id, pid: 'x-' + uuid(), pay: { kind: 'cash', pos: '', acct: '', part: 's', amount: 60000000, by: 'م', note: '' }, sendId: uuid() }); await h.must('staff', 'toSurgery', { id }); return id };
 const id = await mkS('بیمار جراحی'), id2 = await mkS('فقط سایر');
 const SG = i => JSON.parse(h.sql(`select surg from plans where id='${i}'`)[0].surg || '{}');
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role, vw = 1400) => { const c = await b.newContext({ viewport: { width: vw, height: 1000 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.PE = []; p.on('pageerror', e => p.PE.push(e.message));
   await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3200); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const openS = async (p, name) => { await p.evaluate(() => goTile('surg')); await W(900); await p.evaluate(n => { const x = QITEMS.find(q => q.name === n); openSurg(x) }, name); await W(1500) };
@@ -26,7 +26,7 @@ try {
   await p.click('#ex1RepW [data-ex1rep="0"]'); await p.click('#impOk'); await W(600);
   S = await p.evaluate(() => ({ m: SURG.imp.LL5, sel: SURG.s.imp.sel.LL5, chip: document.querySelector('[data-m31pf]').textContent, card: document.getElementById('m31Pf').innerText.replace(/\s+/g, ' ').slice(-160), pressed: document.querySelector('#m31Pf button.t[data-m31t="LL5"]').getAttribute('aria-pressed'), list: document.getElementById('sgImps').innerText.replace(/\s+/g, ' '), msg: document.getElementById('impMsg').textContent }));
   ok(S.m && S.m.rs === 'fail' && S.m.rep === 0 && S.m.b && S.m.d && S.m.l && S.sel === true && /✓/.test(S.chip) && S.pressed === 'true' && /پایین چپ: ۵/.test(S.card) && /پایین چپ: ۵/.test(S.list), 'saved as an implant of the session with reason fail; chip ✓, tooth pressed, listed in both places', S);
-  await p.screenshot({ path: '/home/claude/w/m31/pf.png', fullPage: true });
+  await p.screenshot({ path: '/tmp/pf.png', fullPage: true });
   // ---- (2) سایر درمان‌ها
   await p.click('[data-m31oth]'); await W(500); await p.fill('[data-m31on="0"]', 'فرنکتومی'); await p.fill('[data-m31oa="0"]', '1500000'); await p.click('[data-m31oadd]'); await W(300); await p.fill('[data-m31oa="1"]', '200000'); await W(200);
   ok(await p.evaluate(() => document.querySelector('[data-m31oa="0"]').value) === '1,500,000' || /۱٬۵۰۰٬۰۰۰|1٬500٬000/.test(await p.evaluate(() => document.querySelector('[data-m31oa="0"]').value)), 'the amount is formatted while typing', await p.evaluate(() => document.querySelector('[data-m31oa="0"]').value));
@@ -61,6 +61,6 @@ try {
   ok(q.PE.length === 0, 'reception: no page errors', q.PE);
   // phone
   const id3 = await mkS('گوشی جراحی'); const ph = await login('surgery', 390); await openS(ph, 'گوشی جراحی'); await ph.click('[data-m31pf]'); await W(300); await ph.click('[data-m31oth]'); await W(400);
-  ok(await ph.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1) && ph.PE.length === 0, 'phone: both cards fit without sideways scroll', await ph.evaluate(() => [document.documentElement.scrollWidth, innerWidth])); await ph.screenshot({ path: '/home/claude/w/m31/phone.png', fullPage: true });
+  ok(await ph.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1) && ph.PE.length === 0, 'phone: both cards fit without sideways scroll', await ph.evaluate(() => [document.documentElement.scrollWidth, innerWidth])); await ph.screenshot({ path: '/tmp/phone.png', fullPage: true });
 } catch (e) { bad++; console.log('ERR', e.stack.slice(0, 900)) }
 await b.close(); h.stop(); console.log(bad ? 'FAILED ' + bad : 'ALL OK'); process.exit(bad ? 1 : 0);

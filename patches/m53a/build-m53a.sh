@@ -1,4 +1,5 @@
 #!/bin/bash
+W=${W:-$(cd "$(dirname "$0")/.." && pwd)}
 # builds m53a (flow gaps: reception tasks for patients left in a queue or the surgery room, impression held until surgery is finished, task when prosthesis starts before discharge, old post-op follow-ups closed) for Iran and Cloudflare. Run in Git Bash.
 # The patch was built and tested on the sanitized copy; here it is only applied to the real bundles.
 set -e

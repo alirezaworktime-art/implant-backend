@@ -1,0 +1,19 @@
+name: CI
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: implant-backend }
+      - uses: actions/checkout@v4
+        with: { repository: alirezaworktime-art/implant-frontend, path: implant-frontend }
+      - uses: actions/checkout@v4
+        with: { repository: alirezaworktime-art/implant-tablet, path: implant-tablet }
+      - uses: actions/setup-node@v4
+        with: { node-version: '24' }
+      - name: Build and test
+        working-directory: implant-backend
+        run: |
+          npm install --no-audit --no-fund
+          npm test

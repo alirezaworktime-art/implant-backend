@@ -1,11 +1,11 @@
 // t-m20: «تعامل لابراتوار و پزشک» — lab opens a case, observer login (read only), report. Run: WORKER=<bundle> node t-m20.mjs
 // The observer's first password = the first password of user «doctor»; the test swaps that built-in hash for a test one in a temp copy of the bundle (no real password is used here).
 import { createRequire } from 'node:module'; import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import crypto from 'node:crypto';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
-const SRC = process.env.WORKER || '/home/claude/w/iran-worker-m20.mjs', TMP = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'm20-')), 'w.mjs');
+const SRC = process.env.WORKER, TMP = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'm20-')), 'w.mjs');
 { let s = fs.readFileSync(SRC, 'utf8'); const m = s.match(/const LF_DEF = \{ lfdoc: '([^']+)'/); if (!m) throw new Error('LF_DEF not found'); s = s.split(m[1]).join(sha('ipk|lf|doctor|test-doc-0')); fs.writeFileSync(TMP, s) }
-process.env.WORKER = TMP; const A = await import('file:///home/claude/w/audit/A.mjs');
+process.env.WORKER = TMP; const A = await import(new URL('../audit/A.mjs', import.meta.url).href);
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
 const post = async (pw, action, body = {}) => (await fetch(h.url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, password: pw, ...body }) })).json();
 h.sql(`insert or replace into kv (k, v, t) values ('pw:lflab', '${sha('ipk|lf|lab|test-lab-0')}', 0) returning k`);
@@ -37,7 +37,7 @@ try {
   ok((await post('lf|nazer|test-naz-1', 'ping')).role === 'lfnazer' && (await post(NAZ, 'ping')).ok === false, 'new observer password works, the first one no longer does');
   ok((await post('lf|doctor|test-naz-1', 'ping')).ok === false && (await post('lf|lab|test-naz-1', 'ping')).ok === false, 'the observer password opens nothing else');
   /* screens */
-  const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+  const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
   const login = async (u, pw, vp = { width: 1366, height: 900 }) => { const cx = await b.newContext({ viewport: vp, locale: 'fa-IR', timezoneId: 'Asia/Tehran', acceptDownloads: true }); await cx.route(/googleapis|gstatic/, x => x.abort()); const p = await cx.newPage(); p.PE = []; p.on('pageerror', e => p.PE.push(e.message)); p.on('dialog', d => d.dismiss());
     await p.goto(h.url); await p.click('[data-lrole="lf"]'); await W(300); await p.fill('#lf_user', u); await p.fill('#lg_pw', pw); await p.click('#lgGo'); await W(2500); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
   const lab = await login('lab', 'test-lab-0');
@@ -68,7 +68,7 @@ try {
   const mg = await login('doctor', 'test-doc-0', { width: 390, height: 844 }); await mg.evaluate(() => goTile('lfall')); await W(600);
   ok(await mg.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 2), 'phone width: no sideways scroll on the list');
   const nm = await login('nazer', 'test-naz-1', { width: 390, height: 844 }); await W(300); ok(await nm.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 2 && !!document.querySelector('.m20t')), 'phone width: report fits (tables scroll inside)', await nm.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]));
-  await nz.screenshot({ path: '/home/claude/w/m20/nz-case.png', fullPage: true }); await nz.evaluate(() => goTile('lfrpt')); await W(600); await nz.evaluate(() => document.querySelector('[data-m20p="all"]').click()); await W(400); await nz.screenshot({ path: '/home/claude/w/m20/nz-report.png', fullPage: true }); await nm.screenshot({ path: '/home/claude/w/m20/nz-report-m.png', fullPage: true });
+  await nz.screenshot({ path: '/tmp/nz-case.png', fullPage: true }); await nz.evaluate(() => goTile('lfrpt')); await W(600); await nz.evaluate(() => document.querySelector('[data-m20p="all"]').click()); await W(400); await nz.screenshot({ path: '/tmp/nz-report.png', fullPage: true }); await nm.screenshot({ path: '/tmp/nz-report-m.png', fullPage: true });
   ok([lab, doc, nz, mg, nm].every(p => p.PE.length === 0), 'no page errors', [lab.PE, doc.PE, nz.PE, mg.PE, nm.PE]);
   await b.close();
 } catch (e) { console.log('ERR', e.stack); bad++ }

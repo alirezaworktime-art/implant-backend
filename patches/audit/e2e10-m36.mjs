@@ -2,11 +2,11 @@
 import { chromium, H, login, shot, vis, clickTxt } from './lib.mjs';
 const TD = new Date(Date.now() + 3.5 * 3600e3).toISOString().slice(0, 10); /* today in Tehran (was a fixed date; the test failed from the next day on) */
 const STEP = +(process.argv[2] || 99);
-const h = await H.start({ db: null }); const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const h = await H.start({ db: null }); const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const ALL = []; const keep = p => ALL.push(p); let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + JSON.stringify(x === undefined ? null : x).slice(0, 300))); if (!c) bad++ };
 const W = ms => new Promise(r => setTimeout(r, ms));
 const sql = q => h.sql(q);
-const NAME = 'رضا آزمایشی', PH = '09120000000';
+const NAME = 'رضا آزمایشی', PH = '09131234567';
 try {
 for (const [b_,d,l] of [['IZEN','4','10'],['IZEN','4.5','11.5'],['DIO','4','10']]) console.log('seed', JSON.stringify(await h.call('inventory','invMove',{spec:{kind:'fix',b:b_,sys:'',d,l},delta:5,n:5,type:'in',note:'seed',price:3000000,sendId:'sd'+b_+d})).slice(0,80));
 console.log('cat', JSON.stringify(await h.call('manager','settings',{settings:{catalog:[{b:'IZEN',sys:'',g:'ko',d:['4','4.5'],l:['10','11.5']},{b:'DIO',sys:'',g:'ko',d:['4'],l:['10']}]}})).slice(0,60));

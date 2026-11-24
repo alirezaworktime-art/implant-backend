@@ -1,5 +1,5 @@
 // audit: at each stage, if nobody acts, on whose desk is the patient after N days? WORKER=<bundle> node t-orphan.mjs
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { REC, uuid } = A;
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { REC, uuid } = A;
 const h = await A.start(); const OLD = REC.surgSave[0].req.id; const J = x => JSON.stringify(x);
 const body = (id, finish) => { const q = JSON.parse(JSON.stringify(REC.surgSave[0].req).split(OLD).join(id)); delete q.action; q.session.at = new Date(Date.now() + h.off() * 864e5).toISOString(); q.sendId = uuid(); q.finish = !!finish; if (!finish) { q.session.last = 0; q.last = 0 } return q };
 const show = async (tag, id) => console.log(tag.padEnd(34), '|', h.state(id), '|', (await h.where(id)).join(' ') || '*** NOWHERE ***', '| open tasks:', h.tasks(id).filter(t => !t.done).map(t => t.kind + '@' + t.due.slice(5)).join(',') || '-');

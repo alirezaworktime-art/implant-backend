@@ -1,7 +1,7 @@
 // t-m59a: the doctor lab order = «یک نگاه» (design 1), filled from the history; nothing mandatory. Run: WORKER=<m59a bundle> node t-m59a.mjs
 import { createRequire } from 'node:module'; import fs from 'node:fs';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const PE = []; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 600))); if (!c) bad++ };
 const rx0 = (await h.call('doctor', 'rxGet', {})).tpl;
 const toDis = async (name) => { const id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);
@@ -11,7 +11,7 @@ const toDis = async (name) => { const id = await h.add(name); await h.plan(id, n
 const P = id => JSON.parse(h.sql(`select pros from plans where id='${id}'`)[0].pros || '{}');
 const labsOf = id => h.sql(`select id, st, due, data from labs where plan='${id}' order by created`).map(l => Object.assign(l, { data: JSON.parse(l.data || '{}') }));
 const p1 = await toDis("بیمار کار امروز"), p2 = await toDis("بیمار سفارش"); await h.travel(1);
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role, vw = 1280, vh = 800) => { const c = await b.newContext({ viewport: { width: vw, height: vh }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const st = p => p.evaluate(() => { const v = e => !!e && e.offsetParent !== null, q = s => document.querySelector(s), on = s => [...document.querySelectorAll(s + '[aria-pressed="true"]')].map(b => b.textContent);
   return { blk: v(q('#pfBody .m59')), sheetV: v(q('#pfBody .h9sheet')), loSend: v(q('#loSend')), star: [...document.querySelectorAll('#pfBody .l8req')].some(v), facts: [...document.querySelectorAll('#pfBody .m59f')].map(f => f.textContent.replace(/\s+/g, ' ').trim()), hd: (q('#pfBody .m59hd') || {}).textContent || '', kind: on('#pfBody [data-m59k]'), shade: on('#pfBody [data-m59s]'), for: on('#pfBody .m59 [data-lofor]'), a: [...document.querySelectorAll('#pfBody .m59t.a')].map(b => b.dataset.m59t), p: [...document.querySelectorAll('#pfBody .m59t.p')].map(b => b.dataset.m59t), msg: (q('#loMsg') || {}).textContent || '' } });
@@ -45,7 +45,7 @@ try {
   const f = await p.evaluate(async id => { $('pfSheet').hidden = true; LO = null; await openFile(id, 'بیمار سفارش', 'pros'); loInit(PF.j); renderFile(); await new Promise(r => setTimeout(r, 400)); return !!document.querySelector('#pfBody .m59') }, p2); ok(f, 'the file order form is «یک نگاه» too');
   // 5) phone
   const ph = await login('surgery', 390, 800); await open(ph, p1, 'بیمار کار امروز'); const ov = await ph.evaluate(() => { const i = document.querySelector('#pfSheet .in'); return [document.documentElement.scrollWidth <= innerWidth + 1, i ? i.scrollWidth <= i.clientWidth + 1 : false] });
-  await ph.screenshot({ path: '/home/claude/w/m59a/phone.png', fullPage: false }); ok(ov[0] && ov[1], 'phone: no side scroll', ov);
+  await ph.screenshot({ path: '/tmp/phone.png', fullPage: false }); ok(ov[0] && ov[1], 'phone: no side scroll', ov);
   ok(!PE.length, 'no page errors', PE);
 } catch (e) { console.log('ERR', String(e && e.stack || e).slice(0, 900)); bad++ }
 await b.close(); h.stop(); console.log(bad ? 'FAILED ' + bad : 'ALL OK'); process.exit(bad ? 1 : 0);

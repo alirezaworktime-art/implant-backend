@@ -1,7 +1,7 @@
 // t-m53a (server + page labels). Run: WORKER=<m53a bundle> node --import sameday-shim t-m53a.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { REC, uuid } = A;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { REC, uuid } = A;
 let bad = 0; const J = (x, n = 400) => String(JSON.stringify(x)).slice(0, n); const W = ms => new Promise(r => setTimeout(r, ms));
 const ok = (c, t, x) => { console.log((c ? 'ok   ' : 'FAIL ') + t + (c || x === undefined ? '' : ' ' + J(x))); if (!c) bad++ };
 const h = await A.start(); const OLD = REC.surgSave[0].req.id;
@@ -39,7 +39,7 @@ try {
   // ---------- (4) (5)
   const p3 = await mk('قالب قبل از ترخیص'); await h.must('surgery', 'surgSave', body(p3, true));
   ok(open(p3, 'numb').length + open(p3, 'week').length + open(p3, 'suture').length === 3, 'post-op follow-ups are open');
-  await h.must('staff', 'apptSave', { appt: { plan: p3, name: 'ن', phone: '09120000000', day: h.today(), time: '10:00', dur: '45', kind: 'impr', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() });
+  await h.must('staff', 'apptSave', { appt: { plan: p3, name: 'ن', phone: '09131234567', day: h.today(), time: '10:00', dur: '45', kind: 'impr', doc: 'دکتر سید مجتبی علویکیا', note: '', by: '', onl: '' }, aid: '', task: '', sendId: uuid() });
   const a3 = h.appts(p3).filter(a => a.kind === 'impr' && a.st === 'set').pop(); await h.must('staff', 'apptRef', { aid: a3.id, op: 'set', id: p3, by: 'منشی' }); await h.must('doctor', 'prosMap', rec('prosMap', 0, p3));
   r = await h.call('doctor', 'prosSess', rec('prosSess', 0, p3, { aid: a3.id, lid: uuid(), due: new Date(Date.parse(h.today()) + 10 * 864e5).toISOString().slice(0, 10) })); ok(r.ok === true, 'impression recorded before discharge', r);
   const st3 = h.sql(`select settle, json_extract(surg,'$.dis') dis from plans where id='${p3}'`)[0];
@@ -49,7 +49,7 @@ try {
   await h.travel(13); await tick(); ok(!open(p4, 'numb').length && !open(p4, 'week').length && open(p4, 'suture').length === 1 && T(p4, 'numb')[0].note === 'خودکار: سررسید خیلی گذشته بود', '30 days overdue: «numb» and «week» close, «suture» not yet', T(p4));
   await h.travel(45); await tick(); ok(!open(p4, 'suture').length && !h.sql(`select id from appts where plan='${p4}' and kind='suture' and st='set'`).length && open(p4, 'impr').length === 1, '60 days overdue: «suture» closes too; the impression task stays', T(p4));
   // ---------- page labels
-  const br = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const c = await br.newContext({ viewport: { width: 1280, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, x => x.abort()); const p = await c.newPage(); const PE = []; p.on('pageerror', e => PE.push(e.message.slice(0, 200)));
+  const br = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const c = await br.newContext({ viewport: { width: 1280, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, x => x.abort()); const p = await c.newPage(); const PE = []; p.on('pageerror', e => PE.push(e.message.slice(0, 200)));
   await p.goto(h.url); await p.click('[data-lrole="staff"]'); await p.fill('#lg_pw', A.PW.staff); await p.click('#lgGo'); await W(3500);
   const v = await p.evaluate(() => ({ mark: /---------- m53a \(/.test(document.documentElement.innerHTML), l: [TLBL.stuckq && TLBL.stuckq[0], TLBL.stucks && TLBL.stucks[0], TLBL.nodis && TLBL.nodis[0]], g: [TGRP.stuckq, TGRP.stucks, TGRP.nodis], n: TASKS.filter(t => ['stuckq', 'stucks', 'nodis'].includes(t.kind) && !t.done).length, txt: document.body.innerText.includes('بیمار از روزهای قبل در صف مانده') }));
   ok(v.mark && v.l.every(Boolean) && v.g.every(Boolean) && v.n >= 2, 'the page knows the three new tasks', v); ok(!PE.length, 'no page errors', PE); await br.close();

@@ -3793,7 +3793,7 @@ async function backupAll(db) {
       f['site/index.html'] = ASSETS['/'].d;
       for (const k of Object.keys(ASSETS)) if (ASSETS[k].b) bin['site' + k] = ASSETS[k].d; else if (k !== '/' && k !== '/index.html') f['site' + k + (k.includes('.') ? '' : '.html')] = ASSETS[k].d;
       // a ready-to-paste server file for a new Cloudflare account (site + API; import key empty; no backup key)
-      f['worker_core.js'] = '/* implant-plan API + site — Cloudflare Worker (D1 binding: DB) */\n' + (CODE.files['src/hashes.js'] || '') + "const IMPORT_KEY='';\nconst SENDER='user@example.com';\n" + (CODE.files['src/defaults.js'] || '') + 'const ASSETS=' + JSON.stringify(ASSETS) + ';\n' + (CODE.files['src/main.js'] || '');
+      f['worker_core.js'] = '/* implant-plan API + site — Cloudflare Worker (D1 binding: DB) */\n' + (CODE.files['src/hashes.js'] || '') + "const IMPORT_KEY='';\nconst SENDER='sender@example.com';\n" + (CODE.files['src/defaults.js'] || '') + 'const ASSETS=' + JSON.stringify(ASSETS) + ';\n' + (CODE.files['src/main.js'] || '');
     }
     code = { files: f, bin };
   }

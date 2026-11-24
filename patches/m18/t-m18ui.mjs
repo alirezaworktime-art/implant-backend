@@ -1,12 +1,12 @@
 // t-m18ui: reception screen — «انجام شد» on a booking task opens the three choices; label on a changed plan; win-back search. Run: WORKER=<bundle> node t-m18ui.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
 const mk = async n => { const id = await h.add(n); await h.plan(id, n); await h.confirm(id, n, 'book'); return id };
 const a = await mk('نوبت الف'), c2 = await mk('تغییر ب'), d = await mk('نمی‌آید ج');
 { const OLD = REC.queueAdd[0].req.id, q = JSON.parse(JSON.stringify(REC.toConsult[0].req).split(OLD).join(c2)), cur = JSON.parse(h.sql(`select data from plans where id='${c2}'`)[0].data); Object.assign(q.record.data, cur, { _v: cur.updatedAt, updatedAt: new Date(Date.now() + 5000).toISOString() }); q.record.data.s = JSON.parse(JSON.stringify(cur.s)); q.record.data.s.imp.sel = ['UR6']; const r = await h.call('doctor', 'save', { record: q.record, sendId: uuid() }); ok(r.toConsult === 1, 'setup: changed plan went to the consultant', r) }
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const c = await b.newContext({ viewport: { width: 1366, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort());
 const p = await c.newPage(); const PE = []; p.on('pageerror', e => PE.push(e.message)); p.on('dialog', x => x.dismiss());
 try {

@@ -1,7 +1,7 @@
 // t-m49a (server + page): manager report «ایمپلنت‌های مصرفی» — kind per fixture, by brand, files on tap, period. Run: WORKER=<m49a bundle> node t-m49a.mjs
 import { createRequire } from 'node:module';
-const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
-const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A;
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 let bad = 0; const PE = []; const J = (x, n = 600) => String(JSON.stringify(x)).slice(0, n); const W = ms => new Promise(r => setTimeout(r, ms));
 const ok = (c, t, x) => { console.log((c ? 'ok   ' : 'FAIL ') + t + (c || x === undefined ? '' : ' ' + J(x))); if (!c) bad++ };
 const h = await A.start(); const OLD = REC.queueAdd[0].req.id, OLDN = REC.queueAdd[0].req.patient ? REC.queueAdd[0].req.patient.name : '';
@@ -20,7 +20,7 @@ try {
   ok(rows.every(x => x.id && x.pat && x.tooth), 'every row has the file id, patient and tooth', rows[0]);
   ok((await h.call('staff', 'm1Rep', { from: h.today(), to: h.today() })).ok === false, 'still only for the manager and the accountant');
   // ---------- page
-  const br = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+  const br = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
   const cx = await br.newContext({ viewport: { width: 1280, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await cx.route(/googleapis|gstatic/, x => x.abort()); const p = await cx.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200)));
   await p.goto(h.url); await p.click('[data-lrole="manager"]'); await p.fill('#lg_pw', A.PW.manager); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove()));
   ok(await p.evaluate(() => /---------- m49a \(/.test(document.documentElement.innerHTML)), 'm49a marker in the page');

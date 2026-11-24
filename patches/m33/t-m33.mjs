@@ -2,7 +2,7 @@
 import { h, A, W, mk } from '../m24/probe.mjs'; import { uuid } from '../audit/A.mjs';
 let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 700))); if (!c) bad++ };
 const DOC = 'د. اکبر پور', day = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
-const arc = (name, extra) => Object.assign({ v6: 1, name, phone: '09120000000', nid: '4420099887', age: '40', city: 'یزد', doc: DOC, pfile: '', pays: [], disc: {}, settled: false, rem: '', open: false,
+const arc = (name, extra) => Object.assign({ v6: 1, name, phone: '09131112233', nid: '4420099887', age: '40', city: 'یزد', doc: DOC, pfile: '', pays: [], disc: {}, settled: false, rem: '', open: false,
   lines: [{ id: 'l' + uuid().slice(0, 8), k: 'imp', day: day(-40), doc: DOC, teeth: ['LL6', 'LR6'], n: 2, price: 14500000, b: 'JD', imp: { LL6: { b: 'JD', d: '4.3', l: '10' }, LR6: { b: 'JD', d: '4.3', l: '10' } } },
     { id: 'l' + uuid().slice(0, 8), k: 'ext', day: day(-40), doc: DOC, teeth: ['UR8'], n: 1, price: 800000 }] }, extra || {});
 const cnt = id => { const q = t => h.sql(`select count(*) n from ${t} where plan='${id}'`)[0].n; return { plans: h.sql(`select count(*) n from plans where id='${id}'`)[0].n, pays: q('pays'), tasks: q('tasks'), appts: q('appts'), events: q('events') } };
@@ -11,7 +11,7 @@ const qtyJD = () => h.sql(`select coalesce(sum(qty),0) q from inv_items where b 
 // ---- (1) dup answer
 let r = await h.call('staff', 'fxArc', { id: '', by: 'منشی', ackFile: 1, arc: arc('حسن کریمی', { pfile: '5501' }) }); ok(r.ok, 'first paper file saved', r);
 const pid = r.id;
-await h.call('staff', 'fxArc', { id: '', by: 'منشی', ackDup: 1, ackFile: 1, arc: arc('حسن کریمی', { phone: '09120000000', nid: '', pfile: '' }) }).then(x => ok(x.ok, 'a namesake saved with ackDup (as before)', x));
+await h.call('staff', 'fxArc', { id: '', by: 'منشی', ackDup: 1, ackFile: 1, arc: arc('حسن کریمی', { phone: '09170000000', nid: '', pfile: '' }) }).then(x => ok(x.ok, 'a namesake saved with ackDup (as before)', x));
 r = await h.call('staff', 'fxArc', { id: '', by: 'منشی', arc: arc('حسن کريمي', { phone: '', nid: '', lines: [] }) });
 ok(r.ok === false && /^A6DUP\|/.test(r.error) && /پرونده 5501/.test(r.error) && /موبایل …2233/.test(r.error) && /یکسان: نام/.test(r.error) && / ؛ /.test(r.error), 'the duplicate answer lists each match with file no., mobile end and what matched (Arabic ي/ك still match)', r.error);
 r = await h.call('staff', 'fxArc', { id: '', by: 'منشی', arc: arc('کسی دیگر', { phone: '0913 111 2233', nid: '', lines: [] }) });

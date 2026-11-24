@@ -2,7 +2,7 @@
 import { h, A, W, chromium, mk } from '../m24/probe.mjs';
 let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
 await mk('الف', true);
-const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const login = async (role) => { const c = await b.newContext({ viewport: { width: 1400, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.PE = []; p.API = []; p.on('pageerror', e => p.PE.push(e.message)); p.on('request', r => { try { if (r.method() === 'POST') p.API.push(JSON.parse(r.postData()).action) } catch (e) { } });
   await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3200); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
 const toastT = p => p.evaluate(() => { const t = document.getElementById('toast'); return t.hidden ? '' : t.className + '|' + t.textContent });

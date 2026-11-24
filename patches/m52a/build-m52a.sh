@@ -1,4 +1,5 @@
 #!/bin/bash
+W=${W:-$(cd "$(dirname "$0")/.." && pwd)}
 # builds m52a (after surgery: parts settled separately + cash discount only on the surgery part; «منتظر پزشک» until the plan is sent; plan count in the doctor archive) for Iran and Cloudflare. Run in Git Bash.
 # The patch was built and tested on the sanitized copy; here it is only applied to the real bundles.
 set -e

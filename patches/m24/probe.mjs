@@ -1,0 +1,15 @@
+import { createRequire } from 'node:module';
+const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
+const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A;
+const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms));
+const rx0 = (await h.call('doctor', 'rxGet', {})).tpl;
+const toDis = async (name) => { const id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);
+  await h.must('consultant', 'payAdd', { id, pid: 'x-' + uuid(), pay: { kind: 'cash', pos: '', acct: '', part: 's', amount: 60000000, by: 'م', note: '' }, sendId: uuid() }); await h.must('staff', 'toSurgery', { id });
+  const q = JSON.parse(JSON.stringify(REC.surgSave[0].req).split(REC.queueAdd[0].req.id).join(id)); delete q.action; q.session.at = new Date().toISOString(); q.sendId = uuid(); q.finish = true; await h.must('surgery', 'surgSave', q);
+  await h.must('staff', 'rxGive', { id, ids: [rx0.items[0].id], by: 'منشی' }); await h.must('staff', 'fxFile', { op: 'set', id, file: String(2000 + Math.floor(Math.random() * 7000)), by: 'منشی' }); await h.call('staff', 'discharge', { id, by: 'منشی' }); return id };
+const ord = () => { const o = JSON.parse(JSON.stringify(REC.prosSess[0].req.order)); o.for = 'tryin'; return o };
+export const mk = async (name, start) => { const id = await toDis(name); await h.must('surgery', 'prosMap', { id, map: { LR6: 'a', UR6: 'a' }, note: '', by: 'پزشک' }); const lid = uuid();
+  await h.appt(id, name, 'impr', h.today(), '', '1' + Math.floor(Math.random() * 8) + ':' + (10 + Math.floor(Math.random() * 49))); const aid = h.appts(id).slice(-1)[0].id; await h.call('staff', 'apptRef', { aid, op: 'set', id, by: 'منشی' });
+  const r = await h.call('surgery', 'prosSess', { id, aid, work: 'impr', result: '', note: '', by: 'د. تست', sendId: uuid(), ty: 'impr', sameDay: 1, imp: { meth: 'open', shade: 'A2', abut: '', ret: 'پیچی' }, lid, due: h.today(), order: ord() }); if (!r.ok) console.log('impr', JSON.stringify(r).slice(0, 200));
+  if (start) await h.call('lab', 'labStart', { lid, wt: '990001', proc: '', from: '', designer: '', box: '', note: '', prio: '' }); return lid };
+export { h, A, W, chromium };

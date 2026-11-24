@@ -1,0 +1,37 @@
+// t-m17: consultant «مردد» / «انصراف» / «تصمیم نگرفت» → plan PDF downloads after a successful save; failed save → no PDF; «نوبت‌دهی» still downloads. Run: WORKER=<bundle> node t-m17.mjs
+import { createRequire } from 'node:module';
+const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
+const { start, PW } = await import('file:///home/claude/w/h/h.mjs');
+const h = await start(); let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(x).slice(0, 400))); if (!c) bad++ };
+const W = ms => new Promise(r => setTimeout(r, ms));
+const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const login = async role => { const c = await b.newContext({ viewport: { width: 1366, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran', acceptDownloads: true }); await c.route(/googleapis|gstatic/, r => r.abort());
+  const p = await c.newPage(); p.PE = []; p.on('pageerror', e => p.PE.push(e.message)); p.on('dialog', d => d.dismiss());
+  await p.goto(h.url); await p.click(`[data-lrole="${role}"]`).catch(() => { }); await p.fill('#lg_pw', PW[role]); await p.click('#lgGo'); await W(2500); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
+const doc = await login('doctor');
+const mk = name => doc.evaluate(async name => { const f = blankForm(); f.h.name = name; f.h.phone = '09120000000'; f.h.nid = '4430000000'; const d = toDoc(f); d.updatedAt = new Date().toISOString(); const id = uuid();
+  const j = await api('toConsult', { record: { id, data: d, name, nid: f.h.nid, status: 'draft', total: 0 }, sendId: uuid() }); return j.id || id }, name);
+const P = { think: await mk('بیمار مردد'), lost: await mk('بیمار انصراف'), btn: await mk('بیمار تصمیم‌نگرفت'), fail: await mk('بیمار خطا'), book: await mk('بیمار نوبت') };
+ok(h.sql(`select count(*) n from plans where queue='consult'`)[0].n === 5, '5 plans in the consultant inbox', JSON.stringify(h.sql('select name,queue from plans')));
+const cons = await login('consultant');
+const open = async id => { await cons.evaluate(async id => { openForm(await fetchRecord(id)) }, id); await W(1500) };
+await cons.evaluate(() => { const _d = downloadBlob; window.__dl = []; downloadBlob = function (blob, name) { window.__dl.push({ name, type: blob.type, size: blob.size }); return _d.apply(this, arguments) } });
+const dl = async (fn, ms = 6000) => { const w = cons.waitForEvent('download', { timeout: ms }).catch(() => null); await cons.evaluate(() => { window.__dl = [] }); await fn(); const d = await w; const L = await cons.evaluate(() => window.__dl); if (!d) return L.length ? 'NO-DOWNLOAD-EVENT ' + JSON.stringify(L) : null; return L.length === 1 && L[0].type === 'application/pdf' && L[0].size > 5000 ? L[0].name : 'BAD ' + JSON.stringify(L) };
+const und = async (how, failNet) => { if (how === 'btn') await cons.evaluate(() => openUndecided()); else { await cons.evaluate(() => { $('confirmBtn').click() }); await W(500); await cons.evaluate(o => document.querySelector(`[data-out="${o}"]`).click(), how) }
+  await W(400); await cons.evaluate(() => document.querySelector('[data-unw]').click());
+  if (failNet) await cons.route(/127\.0\.0\.1/, r => { const pd = r.request().postData() || ''; if (/"action":"undecided"/.test(pd)) return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: false, error: 'خطای آزمایشی' }) }); return r.continue() });
+  return dl(() => cons.evaluate(() => $('unGo').click()), failNet ? 4000 : 8000) };
+const today = await cons.evaluate(() => jalali(new Date()).dash);
+await open(P.think); let f = await und('think'); ok(f === `بیمار مردد - ${today}.pdf`, '«مردد» → PDF downloaded, same name pattern', f);
+ok(h.sql(`select queue from plans where id='${P.think}'`)[0].queue === 'undecided', '«مردد» still saved as undecided', JSON.stringify(h.sql(`select queue,status from plans where id='${P.think}'`)));
+await open(P.lost); f = await und('lost'); ok(f === `بیمار انصراف - ${today}.pdf`, '«انصراف» → PDF downloaded', f);
+ok(h.sql(`select queue from plans where id='${P.lost}'`)[0].queue === 'lost', '«انصراف» still saved as lost', JSON.stringify(h.sql(`select queue from plans where id='${P.lost}'`)));
+await open(P.btn); f = await und('btn'); ok(f === `بیمار تصمیم‌نگرفت - ${today}.pdf`, '«تصمیم نگرفت» button → PDF downloaded', f);
+ok(h.sql(`select status from plans where id in ('${P.think}','${P.lost}','${P.btn}')`).every(r => r.status === 'draft'), 'plans stay unconfirmed (draft)', JSON.stringify(h.sql('select name,status from plans')));
+await open(P.fail); f = await und('think', true); ok(f === null, 'failed save → no PDF', f);
+ok(await cons.evaluate(() => !$('unSheet').hidden && /خطای آزمایشی/.test($('unMsg').textContent)), 'failed save → window stays open with the error', await cons.evaluate(() => $('unMsg').textContent));
+await cons.unroute(/127\.0\.0\.1/); await cons.evaluate(() => { $('unSheet').hidden = true });
+await open(P.fail); f = await dl(async () => { await cons.evaluate(() => openUndecided()); await W(300); await cons.evaluate(() => $('unGo').click()) }, 3000);
+ok(f === null && await cons.evaluate(() => /دلیل/.test($('unMsg').textContent)), 'no reason chosen → no PDF', f);
+ok(cons.PE.length === 0 && doc.PE.length === 0, 'no page errors', cons.PE.concat(doc.PE).join(' | '));
+console.log(bad ? 'FAILED ' + bad : 'ALL OK'); await b.close(); h.stop(); process.exit(bad ? 1 : 0);

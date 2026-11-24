@@ -1,0 +1,10 @@
+const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid, REC } = A; const h = await A.start();
+const name='بیمار کامل', id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id);
+await h.must('consultant', 'payAdd', { id, pid: 'x-' + uuid(), pay: { kind: 'cash', pos: '', acct: '', part: 's', amount: 60000000, by: 'م', note: 'یادداشت پرداخت' }, sendId: uuid() }); await h.must('staff', 'toSurgery', { id });
+await h.surg(id, name, true);
+const g = await h.call('consultant', 'get', { id });
+const out = []; const walk = (o, p, d) => { if (d > 7 || o == null) return; if (Array.isArray(o)) { if (o.length) walk(o[0], p + '[]', d + 1); return } if (typeof o === 'object') { for (const k of Object.keys(o)) { const v = o[k]; if (typeof v === 'string' && /note|text|desc|info|reason|why|cmt|memo|^r$|^cr$/i.test(k)) out.push(p + '.' + k + '=' + v.slice(0, 30)); else walk(v, p + '.' + k, d + 1) } } };
+walk(g, 'j', 0); console.log(out.join('\n')); console.log('TOP', Object.keys(g).join(','));
+console.log('SESS', JSON.stringify((g.surg.sessions||[])[0]).slice(0,600));
+console.log('NOTES', JSON.stringify(g.notes).slice(0,300), 'APPT', JSON.stringify((g.appts||[])[0]).slice(0,300), 'TASK', JSON.stringify((g.tasks||[])[0]).slice(0,300), 'PAY', JSON.stringify((g.pays||[])[0]).slice(0,300));
+h.stop();

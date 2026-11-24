@@ -1,0 +1,15 @@
+import { createRequire } from 'node:module';
+const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
+const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid } = A; const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms));
+const mk = async name => { const id = await h.add(name); await h.plan(id, name); await h.confirm(id, name, 'book'); const tk = h.tasks(id).find(t => t.kind === 'book'); await h.appt(id, name, 'surg', h.today(), tk.id); await h.must('consultant', 'payAdd', { id, pid: 'x-' + uuid(), pay: { kind: 'cash', pos: '', acct: '', part: 's', amount: 60000000, by: 'م', note: '' }, sendId: uuid() }); await h.must('staff', 'toSurgery', { id }); return id };
+const id1 = await mk('بیمار یک'), id2 = await mk('بیمار دو'); await h.surg(id2, 'بیمار دو', true);
+const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const c = await b.newContext({ viewport: { width: 1280, height: 800 }, locale: 'fa-IR' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage();
+await p.goto(h.url); await p.click('[data-lrole="surgery"]'); await p.fill('#lg_pw', A.PW.surgery); await p.click('#lgGo'); await W(2500); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove()));
+const vis = () => p.evaluate(() => ({ views: [...document.querySelectorAll('section[id^=view],div[id^=view]')].filter(s => !s.hidden && s.offsetParent !== null).map(s => s.id), tiles: [...document.querySelectorAll('[data-tile]')].filter(x => x.offsetParent !== null).map(x => x.dataset.tile + ':' + x.textContent.trim().slice(0, 25)), heads: [...document.querySelectorAll('h2,h3')].filter(x => x.offsetParent !== null).map(x => (x.id ? '#' + x.id + ' ' : '') + x.textContent.trim().slice(0, 30)).slice(0, 12) }));
+console.log('HOME', JSON.stringify(await vis())); await p.screenshot({ path: 'home.png' });
+await p.evaluate(() => goTile('surg')); await W(800); console.log('TILE', JSON.stringify(await vis())); await p.screenshot({ path: 'tile.png' });
+const cmp = await p.evaluate(async ({ id1 }) => { const q = QITEMS.find(x => x.id === id1); const j = await api('get', { id: id1 }); return { qkeys: Object.keys(q), same: JSON.stringify(q.data) === JSON.stringify(j.data), qs: JSON.stringify(q.data.s.imp).slice(0, 200), js: JSON.stringify(j.data.s.imp).slice(0, 200), surg: JSON.stringify(q.surg) } }, { id1 });
+console.log('CMP', JSON.stringify(cmp).slice(0, 900));
+const g2 = await p.evaluate(async ({ id2 }) => { const j = await api('get', { id: id2 }); return { queue: j.queue, sg: Object.keys(j.surg || {}), ses: Object.keys((j.surg.sessions || [])[0] || {}) } }, { id2 }); console.log('G2', JSON.stringify(g2));
+await b.close(); h.stop();

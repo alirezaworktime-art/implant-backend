@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>سه طرح ساده‌تر برای برگه‌ی دستورکار لابراتوار</title>
+<style>
+:root{--bg:#edf0f3;--s:#fff;--sunk:#f5f7f9;--ink:#17212b;--mu:#5d6a77;--line:#d8dfe6;--ac:#0a7680;--ac2:#075a62;--acs:#dcefef;--lap:#34519a;--laps:#e3e8f5;--ok:#25744a;--oks:#e1f1e7;--warn:#8f5408;--warns:#fbf0de;--r:14px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;font-size:15px;line-height:1.7}
+.wrap{max-width:760px;margin:0 auto;padding:14px 14px 120px}
+h1{font-size:1.15rem;margin:4px 0 2px}
+.sub{color:var(--mu);font-size:.84rem;margin:0 0 12px}
+.tabs{display:flex;gap:4px;background:var(--sunk);border:1px solid var(--line);border-radius:14px;padding:4px;position:sticky;top:6px;z-index:5}
+.tabs button{flex:1;font:inherit;font-weight:700;font-size:.86rem;border:0;background:transparent;color:var(--mu);border-radius:10px;padding:9px 6px;cursor:pointer;line-height:1.3}
+.tabs button small{display:block;font-weight:500;font-size:.7rem}
+.tabs button[aria-pressed=true]{background:var(--s);color:var(--ac);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.card{background:var(--s);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:12px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 2px rgba(23,33,43,.05),0 4px 14px rgba(23,33,43,.04)}
+.why{background:var(--acs);border-radius:12px;padding:10px 12px;font-size:.84rem}
+.why b{color:var(--ac2)}
+.pt{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.pt .nm{font-weight:800;font-size:1.05rem}
+.pt .meta{color:var(--mu);font-size:.8rem}
+.auto{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:var(--ok);background:var(--oks);border-radius:99px;padding:1px 8px;white-space:nowrap;vertical-align:2px}
+.auto::before{content:"✓"}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media(max-width:520px){.facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fact{background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:8px 10px;min-width:0}
+.fact small{display:block;color:var(--mu);font-size:.72rem}
+.fact b{font-size:.9rem;overflow-wrap:anywhere}
+.fact.edit{cursor:pointer}.fact.edit:hover{border-color:var(--ac)}
+.q{display:flex;flex-direction:column;gap:6px}
+.q>span{font-size:.84rem;font-weight:700}
+.q>span em{font-style:normal;color:var(--mu);font-weight:500;font-size:.76rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:99px;padding:7px 15px;cursor:pointer;min-height:40px}
+.chip[aria-pressed=true]{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+.big{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.big button{font:inherit;text-align:right;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:14px;padding:12px;cursor:pointer;min-height:64px;display:flex;flex-direction:column;gap:2px}
+.big button b{font-size:.95rem}.big button small{color:var(--mu);font-size:.74rem}
+.big button[aria-pressed=true]{border-color:var(--ac);background:var(--acs);box-shadow:inset 0 0 0 1px var(--ac)}
+.teeth{direction:ltr;display:flex;flex-direction:column;gap:4px;align-items:center;overflow-x:auto}
+.jaw{display:flex;gap:2px}.jaw+.jaw{border-top:2px solid #8a97a3;padding-top:4px}
+.mid{width:2px;background:#8a97a3;margin:0 3px}
+.t{width:min(30px,calc((100vw - 116px)/16));height:36px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);font:inherit;font-weight:700;font-size:.85rem;cursor:pointer;padding:0;color:var(--ink)}
+.t.a{background:var(--ac);border-color:var(--ac);color:#fff}
+.t.p{background:var(--lap);border-color:var(--lap);color:#fff}
+.legend{font-size:.74rem;color:var(--mu);text-align:center}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin:0 6px 0 3px}
+input,textarea{font:inherit;width:100%;border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:9px 12px;min-height:44px;color:var(--ink)}
+textarea{min-height:64px;resize:vertical}
+.drop{border:2px dashed var(--line);border-radius:14px;padding:14px;text-align:center;color:var(--mu);font-size:.84rem;cursor:pointer}
+.drop b{display:block;color:var(--ink)}
+.more{font:inherit;font-weight:700;color:var(--ac);background:none;border:0;cursor:pointer;padding:0;text-align:right}
+.btn{font:inherit;font-weight:800;font-size:1rem;border:0;border-radius:12px;padding:12px 18px;background:var(--ac);color:#fff;cursor:pointer;min-height:48px}
+.btn.gh{background:var(--s);color:var(--ac);border:1px solid var(--line)}
+.bar{position:fixed;inset-inline:0;bottom:0;background:rgba(255,255,255,.95);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center}
+.bar .in{max-width:760px;width:100%;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.bar small{color:var(--mu);font-size:.76rem;line-height:1.4}
+.steps{display:flex;gap:6px}
+.steps i{flex:1;height:5px;border-radius:5px;background:var(--line)}
+.steps i.on{background:var(--ac)}
+.stepT{font-weight:800;font-size:1rem}
+.last{border:1px solid var(--ac);background:var(--acs);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.last ul{margin:0;padding:0 18px 0 0;font-size:.88rem}
+.pk{display:flex;flex-direction:column;gap:8px}
+.pk button{font:inherit;text-align:right;border:1px solid var(--line);background:var(--sunk);border-radius:14px;padding:10px 12px;cursor:pointer;color:var(--ink)}
+.pk button b{display:block}.pk button small{color:var(--mu)}
+.pk button[aria-pressed=true]{border-color:var(--ac);background:var(--acs)}
+.sheet{position:fixed;inset:0;background:rgba(10,18,24,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet .in{background:var(--s);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px;display:flex;flex-direction:column;gap:10px;max-height:88%;overflow:auto}
+@media(min-width:700px){.sheet{align-items:center}.sheet .in{border-radius:20px}}
+.sum{font-size:.88rem;background:var(--sunk);border-radius:12px;padding:10px 12px}
+.sum div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding:4px 0}
+.sum div:last-child{border:0}
+.sum span{color:var(--mu)}
+.cmp{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:6px}
+.cmp th,.cmp td{border:1px solid var(--line);padding:6px 8px;text-align:right;vertical-align:top}
+.cmp th{background:var(--sunk)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>برگه‌ی دستورکار لابراتوار — سه طرح ساده‌تر</h1>
+  <p class="sub">صفحه‌ی آزمایشی است و به سایت وصل نیست؛ بیمار و اطلاعات ساختگی است. هر سه طرح هیچ فیلد اجباری ندارند. هرچه با <span class="auto">از پرونده</span> مشخص شده خودکار از سابقه‌ی بیمار پر می‌شود.</p>
+  <div class="tabs" role="tablist">
+    <button type="button" data-tab="1" aria-pressed="true">طرح ۱<small>یک نگاه</small></button>
+    <button type="button" data-tab="2" aria-pressed="false">طرح ۲<small>سه قدم</small></button>
+    <button type="button" data-tab="3" aria-pressed="false">طرح ۳<small>مثل دفعه‌ی قبل</small></button>
+  </div>
+
+  <!-- shared patient header -->
+  <div class="card" id="ptCard">
+    <div class="pt"><div><div class="nm">بیمار نمونه <span class="auto">از پرونده</span></div><div class="meta">پرونده‌ی ۴۵۲۱ · ۵۲ ساله · جراحی ۱۴۰۵/۰۶/۱۲ · مرحله: قالب‌گیری انجام شد</div></div><div class="meta">تاریخ امروز ۱۴۰۵/۰۸/۲۹</div></div>
+    <div class="facts">
+      <div class="fact"><small>پزشک</small><b>د. نمونه</b> <span class="auto">ورود</span></div>
+      <div class="fact"><small>دستیار</small><b>خانم نمونه</b> <span class="auto">جراحی</span></div>
+      <div class="fact"><small>برند ایمپلنت</small><b>Dentium (کره‌ای)</b> <span class="auto">جراحی</span></div>
+      <div class="fact"><small>ایمپلنت‌ها</small><b>UR6 · UL4 · UL6</b> <span class="auto">جراحی</span></div>
+      <div class="fact"><small>روش قالب‌گیری</small><b>اسکن دیجیتال</b> <span class="auto">کار امروز</span></div>
+      <div class="fact"><small>تحویل</small><b>۱۴۰۵/۰۹/۰۹ (۱۰ روز)</b> <span class="auto">خودکار</span></div>
+    </div>
+  </div>
+
+  <!-- design 1 -->
+  <section id="d1">
+    <div class="card">
+      <div class="why"><b>طرح ۱ — یک نگاه:</b> همه چیز در یک صفحه‌ی کوتاه. اطلاعات بیمار بالای صفحه خلاصه شده و فقط ۳ سؤال اصلی می‌ماند، همه از قبل انتخاب‌شده. بقیه زیر «جزئیات بیشتر» است.</div>
+      <div class="q"><span>ساخت برای <span class="auto">مرحله‌ی بعد</span></span><div class="chips" data-g="for"></div></div>
+      <div class="q"><span>نوع روکش <span class="auto">طرح درمان</span></span><div class="chips" data-g="kind"></div></div>
+      <div class="q"><span>رنگ <span class="auto">کار امروز</span></span><div class="chips" data-g="shade"></div></div>
+      <div class="q"><span>دندان‌ها <span class="auto">پایه / پونتیک پرونده</span> <em>— بزنید تا عوض شود</em></span><div class="teeth" data-teeth="1"></div><div class="legend"><i style="background:var(--ac)"></i>پایه<i style="background:var(--lap)"></i>پونتیک</div></div>
+      <button type="button" class="more" data-more="1">+ جزئیات بیشتر (اباتمنت، عکس دهانی، توضیح، فایل)</button>
+      <div data-moreb="1" hidden class="q">
+        <div class="q"><span>اباتمنت</span><div class="chips" data-g="abut"></div></div>
+        <div class="q"><span>عکس دهانی</span><div class="chips" data-g="photo"></div></div>
+        <div class="q"><span>توضیح برای لابراتوار</span><textarea placeholder="اختیاری"></textarea></div>
+        <div class="drop"><b>فایل اسکن / عکس</b>اختیاری — بزنید یا بکشید</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- design 2 -->
+  <section id="d2" hidden>
+    <div class="card">
+      <div class="why"><b>طرح ۲ — سه قدم:</b> هر بار فقط یک سؤال با دکمه‌های بزرگ (مناسب گوشی و تبلت). پیشنهاد سیستم از قبل انتخاب شده؛ با «ارسال» در هر قدم سفارش می‌رود و لازم نیست تا آخر بروید.</div>
+      <div class="steps"><i class="on"></i><i></i><i></i></div>
+      <div data-step="1"><div class="stepT">۱. چه چیزی ساخته شود؟</div><div class="big" data-big="for"></div></div>
+      <div data-step="2" hidden><div class="stepT">۲. روکش و دندان‌ها</div><div class="big" data-big="kind"></div><div class="teeth" data-teeth="2" style="margin-top:10px"></div><div class="legend"><i style="background:var(--ac)"></i>پایه<i style="background:var(--lap)"></i>پونتیک — از پرونده</div></div>
+      <div data-step="3" hidden><div class="stepT">۳. رنگ، فایل و توضیح</div><div class="chips" data-g="shade"></div><div class="drop" style="margin-top:10px"><b>فایل اسکن / عکس</b>اختیاری</div><textarea style="margin-top:10px" placeholder="توضیح (اختیاری)"></textarea></div>
+      <div style="display:flex;gap:8px;justify-content:space-between"><button type="button" class="btn gh" data-prev>قبلی</button><button type="button" class="btn gh" data-next>بعدی</button></div>
+    </div>
+  </section>
+
+  <!-- design 3 -->
+  <section id="d3" hidden>
+    <div class="card">
+      <div class="why"><b>طرح ۳ — مثل دفعه‌ی قبل:</b> اگر بیمار قبلاً سفارش داشته، همان سفارش با مرحله‌ی بعد آماده است؛ یک دکمه. اگر نداشته، از «بسته‌های آماده» یکی را بزنید. تغییر فقط اگر لازم بود.</div>
+      <div class="last">
+        <b>سفارش قبلی این بیمار (۱۴۰۵/۰۸/۱۰ · رزین پیچ‌شونده)</b>
+        <ul><li>Implant (zirconia) · پیچ‌شونده · مونولیتیک</li><li>دندان‌ها: UR6 · UL4 · UL5 (پونتیک) · UL6</li><li>رنگ A2 · اسکن دیجیتال</li></ul>
+        <div>این بار: <b>کار نهایی</b> <span class="auto">مرحله‌ی بعد</span></div>
+      </div>
+      <div class="q"><span>یا یک بسته‌ی آماده</span><div class="pk" data-pk></div></div>
+      <button type="button" class="more" data-more="3">+ تغییر جزئیات</button>
+      <div data-moreb="3" hidden class="q">
+        <div class="q"><span>ساخت برای</span><div class="chips" data-g="for"></div></div>
+        <div class="q"><span>رنگ</span><div class="chips" data-g="shade"></div></div>
+        <div class="teeth" data-teeth="3"></div>
+        <textarea placeholder="توضیح (اختیاری)"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <div class="card">
+    <b>مقایسه</b>
+    <table class="cmp">
+      <tr><th></th><th>طرح ۱</th><th>طرح ۲</th><th>طرح ۳</th></tr>
+      <tr><th>کمترین کلیک</th><td>۱ (ارسال)</td><td>۱ (ارسال در قدم اول)</td><td>۱ (همان سفارش قبلی)</td></tr>
+      <tr><th>مناسب</th><td>کامپیوتر و تبلت؛ پزشکی که همه را یک‌جا می‌خواهد ببیند</td><td>گوشی؛ کاربر تازه</td><td>بیمارانی که مرحله‌ی قبلی سفارش داشتند</td></tr>
+      <tr><th>ضعف</th><td>صفحه کمی بلندتر</td><td>برای تغییر چند چیز، رفت‌وبرگشت بین قدم‌ها</td><td>برای اولین سفارش، به بسته‌ها تکیه دارد</td></tr>
+    </table>
+    <p class="sub" style="margin:0">می‌شود ترکیب کرد: مثلاً طرح ۳ وقتی سفارش قبلی هست و طرح ۱ وقتی نیست.</p>
+  </div>
+</div>
+
+<div class="bar"><div class="in"><small id="barT">هیچ فیلدی اجباری نیست</small><button type="button" class="btn" id="send">ارسال به لابراتوار</button></div></div>
+
+<div class="sheet" id="sh" hidden><div class="in">
+  <b>این سفارش به لابراتوار می‌رود (آزمایشی)</b>
+  <div class="sum" id="sumB"></div>
+  <p class="sub" style="margin:0">برگه‌ی تصویری دستورکار هم مثل الان خودکار ساخته و با سفارش فرستاده می‌شود.</p>
+  <button type="button" class="btn gh" id="shX">بستن</button>
+</div></div>
+
+<script>
+const O={
+  for:[['tryin','رزین پیچ‌شونده','امتحان قبل از کار نهایی'],['rabt','رزین اباتمنت','امتحان اباتمنت'],['deliv','کار نهایی','روکش نهایی'],['abut','اباتمنت','فقط اباتمنت']],
+  kind:[['zs','زیرکونیا پیچ‌شونده','Implant (zirconia) · مونولیتیک'],['zc','زیرکونیا سمانی','Implant (zirconia) · سمان‌شونده'],['pfm','PFM سمانی','Implant (PFM) · پرسلن'],['sc','اسکروسمنت','زیرکونیا · اسکروسمنت']],
+  shade:[['A1','A1'],['A2','A2'],['A3','A3'],['B1','B1'],['B2','B2'],['?','بعداً']],
+  abut:[['std','استاندارد'],['cust','کاستوم'],['ti','تیتانیوم بیس']],
+  photo:[['y','دارد'],['n','ندارد']]
+};
+const S={tab:'1',step:1,for:'deliv',kind:'zs',shade:'A2',abut:'ti',photo:'',pk:'last',T:{UR6:'a',UL4:'a',UL5:'p',UL6:'a'}};
+const lab=(g,v)=>{const x=(O[g]||[]).find(o=>o[0]===v);return x?x[1]:''};
+function chips(){document.querySelectorAll('[data-g]').forEach(c=>{const g=c.dataset.g;c.innerHTML=O[g].map(o=>`<button type="button" class="chip" data-gv="${g}|${o[0]}" aria-pressed="${S[g]===o[0]}">${o[1]}</button>`).join('')});
+  document.querySelectorAll('[data-big]').forEach(c=>{const g=c.dataset.big;c.innerHTML=O[g].map(o=>`<button type="button" data-gv="${g}|${o[0]}" aria-pressed="${S[g]===o[0]}"><b>${o[1]}</b><small>${o[2]||''}</small></button>`).join('')});
+  const P=[['last','همان سفارش قبلی + مرحله‌ی بعد','کار نهایی · زیرکونیا پیچ‌شونده · A2 · همان دندان‌ها'],['single','روکش تک زیرکونیا پیچ‌شونده','کار نهایی · مونولیتیک'],['bridge','بریج PFM سمانی','کار نهایی · پرسلن'],['aox','All on X','رزین پیچ‌شونده · مولتی‌یونیت']];
+  document.querySelectorAll('[data-pk]').forEach(c=>c.innerHTML=P.map(p=>`<button type="button" data-pkv="${p[0]}" aria-pressed="${S.pk===p[0]}"><b>${p[1]}</b><small>${p[2]}</small></button>`).join(''));
+  document.querySelectorAll('[data-teeth]').forEach(c=>{const row=j=>{let r='';for(let i=8;i>=1;i--)r+=tb(j+'R'+i,i);r+='<span class="mid"></span>';for(let i=1;i<=8;i++)r+=tb(j+'L'+i,i);return `<div class="jaw">${r}</div>`};c.innerHTML=row('U')+row('L')})}
+const tb=(k,i)=>`<button type="button" class="t ${S.T[k]||''}" data-tk="${k}">${i}</button>`;
+function steps(){document.querySelectorAll('[data-step]').forEach(d=>d.hidden=Number(d.dataset.step)!==S.step);document.querySelectorAll('.steps i').forEach((x,i)=>x.classList.toggle('on',i<S.step));
+  document.querySelector('[data-prev]').style.visibility=S.step>1?'visible':'hidden';document.querySelector('[data-next]').style.visibility=S.step<3?'visible':'hidden'}
+document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+  if(t.dataset.tab){S.tab=t.dataset.tab;document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',b===t));['1','2','3'].forEach(k=>document.getElementById('d'+k).hidden=k!==S.tab);window.scrollTo({top:0});return}
+  if(t.dataset.gv){const [g,v]=t.dataset.gv.split('|');S[g]=S[g]===v&&g!=='for'?'':v;S.pk='';chips();return}
+  if(t.dataset.pkv){S.pk=t.dataset.pkv;if(S.pk==='single'){S.kind='zs';S.for='deliv'}if(S.pk==='bridge'){S.kind='pfm';S.for='deliv'}if(S.pk==='aox'){S.for='tryin'}if(S.pk==='last'){S.for='deliv';S.kind='zs';S.shade='A2'}chips();return}
+  if(t.dataset.tk){const k=t.dataset.tk,v=S.T[k];S.T[k]=!v?'a':v==='a'?'p':'';if(!S.T[k])delete S.T[k];chips();return}
+  if(t.dataset.more){const b=document.querySelector(`[data-moreb="${t.dataset.more}"]`);b.hidden=!b.hidden;t.textContent=(b.hidden?'+ ':'− ')+t.textContent.slice(2);return}
+  if(t.hasAttribute('data-next')){S.step=Math.min(3,S.step+1);steps();return}
+  if(t.hasAttribute('data-prev')){S.step=Math.max(1,S.step-1);steps();return}
+  if(t.id==='send'){const A=Object.keys(S.T).filter(k=>S.T[k]==='a'),P=Object.keys(S.T).filter(k=>S.T[k]==='p');
+    const L=[['بیمار','بیمار نمونه · پرونده ۴۵۲۱'],['ساخت برای',lab('for',S.for)||'— (مرحله‌ی بعد خودکار)'],['روکش',S.tab==='3'&&S.pk==='aox'?'All on X':lab('kind',S.kind)||'—'],['رنگ',lab('shade',S.shade)||'—'],['پایه',A.join(' · ')||'— (پایه‌های پرونده)'],['پونتیک',P.join(' · ')||'—'],['برند','Dentium (کره‌ای)'],['تحویل','۱۴۰۵/۰۹/۰۹'],['پزشک / دستیار','د. نمونه / خانم نمونه']];
+    document.getElementById('sumB').innerHTML=L.map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('');document.getElementById('sh').hidden=false;return}
+  if(t.id==='shX'){document.getElementById('sh').hidden=true}});
+chips();steps();
+</script>
+</body>
+</html>

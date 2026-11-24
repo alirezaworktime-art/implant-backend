@@ -1,0 +1,1 @@
+/* ---------- m48a (owner, 2026-11-18): page only — money separators, general-dentist consult flag, larger «درمان‌های انتخاب نشده», comments in the PDFs, «نتیجه‌ی مشاوره» asked again after an error. No server change. ---------- */

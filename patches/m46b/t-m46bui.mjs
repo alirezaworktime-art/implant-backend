@@ -1,0 +1,16 @@
+// t-m46bui: reception plan-choice sheet shows what every plan contains. Run: WORKER=<m46b bundle> node t-m46bui.mjs
+import { createRequire } from 'node:module';
+const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
+const A = await import('file:///home/claude/w/audit/A.mjs'); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0;
+const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 700))); if (!c) bad++ };
+const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [];
+const login = async (role, vw = 1280, vh = 800) => { const c = await b.newContext({ viewport: { width: vw, height: vh }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
+try { for (const [vw, vh] of [[1280, 800], [390, 740]]) { const tag = vw > 500 ? 'desktop' : 'phone'; const p = await login('staff', vw, vh); await W(500);
+    const s = await p.evaluate(() => { const A1 = blankSections(), B1 = blankSections(), C1 = blankSections(); ['UR6', 'UR5'].forEach(k => A1.imp.sel[k] = true); ['LL6'].forEach(k => B1.imp.sel[k] = true); B1.ext.sel.UR8 = true; C1.imp.sel.UL3 = true;
+      const snap = { id: 'x', h: { name: 'بیمار آزمایشی' }, s: A1, sx: [B1, C1], s2: B1, alt: { mode: 'full', text: 'توضیح' }, brand: 'ref', pay: { plater: 1 } }; q7PlanSheet(snap); const sh = document.getElementById('q7PlSh'), D = [...sh.querySelectorAll('.m46bd')];
+      const res = { open: !sh.hidden, picks: sh.querySelectorAll('[data-q7pick]').length, n: D.length, titles: D.map(d => d.querySelector('summary').textContent), on: D.map(d => [...d.querySelectorAll('.mc i.on')].length), cards: D.map(d => [...d.querySelectorAll('.pv-card h3')].map(x => x.textContent)), wide: document.documentElement.scrollWidth <= innerWidth + 2 }; q7PlanSheet(snap); res.again = document.querySelectorAll('#q7PlSh .m46bw').length; return res });
+    ok(s.open && s.picks === 3 && s.n === 3 && s.titles.join() === 'طرح ۱,طرح ۲,طرح ۳' && s.again === 1, tag + ': the sheet lists the three plans with their details (once)', s);
+    ok(s.on[0] === 2 && s.on[1] === 2 && s.on[2] === 1 && s.cards[0].some(t => /ایمپلنت/.test(t)) && s.cards[1].some(t => /کشیدن/.test(t)) && s.cards[1].length === 2 && s.wide, tag + ': each plan shows its own treatments and teeth; no sideways scroll', s);
+    if (tag === 'desktop') await p.screenshot({ path: 'plans.png' }); await p.context().close() }
+} catch (e) { console.log('ERR', e.message.slice(0, 600)); bad++ }
+ok(!PE.length, 'no page errors', PE.slice(0, 3)); await b.close(); h.stop(); console.log(bad ? 'FAILED ' + bad : 'ALL OK'); process.exit(bad ? 1 : 0);

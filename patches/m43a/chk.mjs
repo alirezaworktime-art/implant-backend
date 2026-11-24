@@ -1,0 +1,5 @@
+import { start, uuid, REC } from '../audit/A.mjs'; const h = await start(); const OLD = REC.queueAdd[0].req.id;
+const n = 'بیمار پرچم', id = await h.add(n); const q = JSON.parse(JSON.stringify(REC.toConsult[0].req).split(OLD).join(id).split('رضا آزمایشی').join(n)); delete q.action; q.record.data.updatedAt = new Date().toISOString(); q.record.data.s.imp.ip = Object.assign({}, q.record.data.s.imp.ip, { m43: '1' }); q.record.data.s.imp.sp = [{ k: q.record.data.s.imp.sel[0], b: 'Root', d: '4', l: '10' }]; q.sendId = uuid();
+await h.must('doctor', 'queueOpen', { id }); q.record.data._v = h.sql(`select json_extract(data,'$.updatedAt') v from plans where id='${id}'`)[0].v; await h.must('doctor', 'toConsult', q);
+for (const role of ['consultant', 'staff', 'surgery', 'doctor']) { const g = await h.call(role, 'get', { id }); console.log(role, JSON.stringify(g.data.s.imp.ip), JSON.stringify(g.data.s.imp.sp)) }
+await h.confirm(id, n, 'book'); const g = await h.call('consultant', 'get', { id }); console.log('after confirm (REC payload replaces data):', JSON.stringify(g.data.s.imp.ip)); h.stop();

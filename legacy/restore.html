@@ -1,0 +1,20 @@
+<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>بازیابی اطلاعات طرح درمان</title>
+<style>body{font-family:Tahoma,sans-serif;max-width:640px;margin:24px auto;padding:0 16px;line-height:1.8;background:#f4f6f8;color:#17212b}
+input,button{font:inherit;width:100%;padding:10px;margin:4px 0 12px;border:1px solid #c4ced8;border-radius:8px;box-sizing:border-box}button{background:#0a7680;color:#fff;border:0;font-weight:bold;cursor:pointer}
+#log{white-space:pre-wrap;background:#fff;border:1px solid #d8dfe6;border-radius:8px;padding:10px;min-height:60px}</style></head><body>
+<h2>بازیابی اطلاعات در سرور تازه</h2>
+<p>این صفحه فایل <b>data.json</b> نسخه‌ی پشتیبان را به سرور (Worker) تازه می‌فرستد. اول راهنمای README را انجام دهید.</p>
+<label>آدرس سرور تازه (مثلاً https://implant-api.نام.workers.dev/)<input id="u"></label>
+<label>کلید بازیابی (همان IMPORT_KEY که در worker_core.js نوشتید)<input id="k"></label>
+<label>فایل data.json<input id="f" type="file" accept=".json"></label>
+<button id="go">شروع بازیابی</button><div id="log"></div>
+<script>
+const log=t=>document.getElementById('log').textContent+=t+'\n';
+document.getElementById('go').onclick=async()=>{const u=document.getElementById('u').value.trim(),k=document.getElementById('k').value.trim(),f=document.getElementById('f').files[0];
+  if(!u||!k||!f){log('آدرس، کلید و فایل را وارد کنید.');return}
+  const d=JSON.parse(await f.text()),T=d.tables||{};const post=async b=>{const r=await fetch(u,{method:'POST',body:JSON.stringify(Object.assign({action:'import',key:k},b))});return r.json()};
+  try{let j=await post({tables:{kv:T.kv||[],inv_items:T.inv_items||[],tasks:T.tasks||[]}});log('تنظیمات و اقلام انبار: '+(j.ok?'انجام شد':j.error));
+    const P=T.plans||[];for(let i=0;i<P.length;i+=40){j=await post({items:P.slice(i,i+40)});log('پرونده‌ها '+Math.min(i+40,P.length)+' از '+P.length+': '+(j.ok?'انجام شد':j.error))}
+    const M=T.inv_moves||[];for(let i=0;i<M.length;i+=200){j=await post({tables:{inv_moves:M.slice(i,i+200)}});log('گردش انبار '+Math.min(i+200,M.length)+' از '+M.length+': '+(j.ok?'انجام شد':j.error))}
+    log('تمام شد. حالا IMPORT_KEY را دوباره خالی کنید و Worker را دوباره ذخیره کنید.')}catch(e){log('خطا: '+e.message)}};
+</script></body></html>

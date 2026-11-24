@@ -1,0 +1,9 @@
+import { createRequire } from 'node:module';
+const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
+const A = await import('file:///home/claude/w/audit/A.mjs'); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms));
+const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] });
+const c = await b.newContext({ viewport: { width: 1280, height: 900 }, locale: 'fa-IR' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage();
+await p.goto(h.url); await p.click('[data-lrole="manager"]'); await p.fill('#lg_pw', A.PW.manager); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove()));
+console.log(JSON.stringify(await p.evaluate(() => ({ views: [...document.querySelectorAll('section[id^=view]')].filter(s => !s.hidden && s.offsetParent !== null).map(s => s.id), tiles: [...document.querySelectorAll('[data-tile]')].filter(x => x.offsetParent !== null).map(x => x.dataset.tile + ':' + x.textContent.trim().slice(0, 22)), tl: typeof tileList === 'function' ? tileList().map(t => t.k + ':' + (t.t || t.l || '')) : [], tileParent: (() => { const t = document.querySelector('[data-tile]'); return t ? t.parentNode.id + '.' + t.parentNode.className : '' })() }))).slice(0, 1500));
+const cat = await p.evaluate(async () => { const j = await api('m14Cat', {}); return { svc: j.svc.map(s => s.name + '|' + s.cat + '|' + s.price + '|' + s.rule), payees: j.payees.map(x => x.name + '|' + x.kind), nf: j.fees.length } }); console.log(JSON.stringify(cat).slice(0, 3000));
+await p.screenshot({ path: 'mgr-home.png' }); await b.close(); h.stop();

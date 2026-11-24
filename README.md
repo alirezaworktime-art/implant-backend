@@ -1,0 +1,39 @@
+# implant-backend
+
+API server of the Yazd implant clinic treatment-plan system (طرح درمان ایمپلنت یزد), its build, operations scripts,
+the patch history and the tests. State: **m61a** (2026-11-23).
+
+## Runtime
+- Written as a **Cloudflare Worker** (`fetch` handler, one `POST` endpoint with `action`), database through the **D1** API.
+- **Primary:** Iran server — Ubuntu 24.04, **Node.js 24**, a small D1-compatible layer over `node:sqlite`
+  (`ops/iran-server/server.mjs`), systemd service on 127.0.0.1:8787, **nginx** + Let's Encrypt in front.
+- **Backup:** the same bundle on Cloudflare Workers + D1, overwritten every night from the Iran server (`ops/iran-server/nightly.mjs`).
+- Roles: reception (staff), doctor, consultant, surgery, manager, lab, stock, accounting; password hashes PBKDF2 / SHA-256 (`crypto.subtle`).
+
+## Layout
+| Path | |
+|---|---|
+| `src/header.js` | Constants, default tariffs and settings; placeholders for secrets |
+| `src/server.js` | The whole API (≈1.1 MB, built up by the patches below) |
+| `scripts/build-bundle.mjs` | Builds the deployable bundle: header + site files (**implant-frontend**) + APK (**implant-tablet**) + API |
+| `secrets/` | `local.example.mjs`; the real `local.mjs` is git-ignored |
+| `ops/iran-server/` | Server setup, deploy, nightly copy, snapshots, monitor, backup scripts (addresses, ports and keys removed) |
+| `patches/mNN/` | Every change since m17: `SPEC.md`, `client.js` / `css.css` (page), `srv.js` (server), `gen.mjs` → `patch-mNN.mjs`, tests `t-mNN*.mjs` |
+| `tests/` | Test harness (`h.mjs`, `A.mjs`, `server-clock.mjs`), synthetic records, `reg-all.sh` / `reg-list.sh` (≈90 tests) |
+| `legacy/` | The first source tree (Oct 2026) and Google Apps Script code |
+
+## Build
+```
+node scripts/build-bundle.mjs ../implant-frontend ../implant-tablet dist/worker.mjs
+```
+With `secrets/local.mjs` filled in, the output is the same code that runs live (verified byte-for-byte for m61a,
+apart from the placeholder clinic phone in the defaults). Without it the bundle has no passwords.
+
+## Tests
+Browser tests use Playwright (`playwright-core`) with Chrome; server tests run the bundle in Node.
+`WORKER=dist/worker.mjs node --import patches/m23/sameday-shim.mjs patches/m61a/t-m61a.mjs`.
+Known failing: `t-m17` (harness port), `t-m22` (one check), `e2e10-m36` (missing seed file).
+
+## Not in this repo
+Passwords and their hashes, the import / backup keys, the Cloudflare token and account ids, Google sheet and
+Apps Script ids, server IP, SSH port and key, and **any patient data**. Phone numbers are replaced by `09120000000`.

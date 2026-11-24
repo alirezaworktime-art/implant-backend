@@ -1,0 +1,6 @@
+// adds the m43a + m43b lines to CLAUDE.md and HANDOFF through work/docs-line.mjs (idempotent). node docs-m43ab.mjs
+import { execFileSync } from 'node:child_process'; import path from 'node:path';
+const D = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const add = (key, text) => console.log(execFileSync(process.execPath, [path.join(D, '..', 'docs-line.mjs'), key, text], { encoding: 'utf8' }));
+add('m43a زنده شد', '**2026-11-17 — m43a زنده شد** (ایران و Cloudflare؛ فقط صفحه). «موارد خاص» ردیف پایه ایمپلنت با تعرفه‌ی گروه برند خودشان حساب می‌شوند (دندان انتخاب‌شده + برند شناخته‌شده)، بقیه با برند طرح؛ نمایش «n × تعرفه + خاص» در فرم و PDF. فقط فرم‌های تازه و طرح‌های هنوز تأییدنشده (نشانه `s.imp.ip.m43`)؛ طرح تأییدشده قیمت قبلی را نگه می‌دارد. `work\\m43a\\SPEC.md`؛ t-m43aui (۱۴) ALL OK؛ رگرسیون کامل ۴۹ فایل ALL OK.');
+add('m43b زنده شد', '**2026-11-17 — m43b زنده شد** (ایران و Cloudflare). مدیر از پرونده‌ی بیمار «اصلاح جلسه‌ی جراحی» را باز می‌کند (هر جلسه، هر روز): `surgFix` محتوای جلسه را جایگزین می‌کند، انبار به اندازه‌ی تفاوت اصلاح می‌شود، مبلغ فقط به اندازه‌ی تغییر جابه‌جا می‌شود؛ پیگیری‌ها، نوبت‌ها، «آخرین جلسه» و پروتز دست نمی‌خورند. `work\\m43b\\SPEC.md`؛ t-m43b (۲۴) و t-m43bui (۱۸) ALL OK. برگشت به قبل از هر دو: `deploy-m42e.sh` + `node cf.mjs put cf-m42e.mjs`.');

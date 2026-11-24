@@ -1,0 +1,5 @@
+// adds the m48a line to CLAUDE.md and HANDOFF through work/docs-line.mjs (idempotent). node docs-m48a.mjs
+import { execFileSync } from 'node:child_process'; import path from 'node:path';
+const D = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const add = (key, text) => console.log(execFileSync(process.execPath, [path.join(D, '..', 'docs-line.mjs'), key, text], { encoding: 'utf8' }));
+add('m48a زنده شد', '**2026-11-18 — m48a زنده شد** (ایران و Cloudflare؛ فقط صفحه). (۱) ممیز زنده و مبلغ به حروف در خانه‌های مبلغ؛ (۲) تیک «بیمار نیاز به مشاوره‌ی دندانپزشک عمومی دارد» در طرح (`h.gen`) با هشدار برای مشاور و در پرونده — «کار» خودکار پذیرش مانده (سرور)؛ (۳) دکمه‌ی «درمان‌های انتخاب نشده» بزرگ، رنگی و در نوار شناور؛ (۵) توضیح‌های تایپی و قلمی در «PDF طرح» و PDF پرونده‌ی کاغذی، تصویر قلم و چاپ در «همه‌ی توضیح‌ها»؛ (۷) باگ نیامدن چهار گزینه‌ی «نتیجه‌ی مشاوره» بعد از خطا. مانده: ۵٪ تخفیف نقدی پذیرش (سرور؛ افزونه‌ی حریم خصوصی خواندن بخش سرور نسخه‌ی پاک‌شده را رد می‌کند). `work\\m48a\\SPEC.md`؛ t-m48aui (۲۶) ALL OK. برگشت: `deploy-m47a.sh` + `node cf.mjs put cf-m47a.mjs`.');

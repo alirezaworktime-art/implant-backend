@@ -1,0 +1,5 @@
+// adds the m49a line to CLAUDE.md and HANDOFF through work/docs-line.mjs (idempotent). node docs-m49a.mjs
+import { execFileSync } from 'node:child_process'; import path from 'node:path';
+const D = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const add = (key, text) => console.log(execFileSync(process.execPath, [path.join(D, '..', 'docs-line.mjs'), key, text], { encoding: 'utf8' }));
+add('m49a زنده شد', '**2026-11-18 — m49a زنده شد** (ایران و Cloudflare). گزارش مدیر «ایمپلنت‌های مصرفی»: ستون‌های کاشت موفق / کاشت مجدد / فیل اولیه (سرور `rs` هر ردیف را از جلسه‌ی جراحی می‌خواند)، جدول به تفکیک برند، زدن روی برند یا سایز = فهرست پرونده‌ها با دکمه‌ی «پرونده»؛ بازه‌ی تاریخ: آخرین انتخاب برنده است و انتخاب تاریخ بدون «نمایش» بار می‌کند. خواندن کد سرور: کپی بدون ایمیل `work\\m48a\\m48a-srv-read.js` روی لپ‌تاپ با `node work\\m48a\\g.mjs` (افزونه‌ی حریم خصوصی خواندن آن را در محیط ابری رد می‌کند). `work\\m49a\\SPEC.md`؛ t-m49a (۲۱) ALL OK. برگشت: `deploy-m48a.sh` + `node cf.mjs put cf-m48a.mjs`.');

@@ -1,0 +1,24 @@
+// t-m43fui: manager settings — the new doctor / staff name is chosen from the personal accounts. Run: WORKER=<m43f bundle> node t-m43fui.mjs
+import { createRequire } from 'node:module';
+const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
+const A = await import('file:///home/claude/w/audit/A.mjs'); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0;
+const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
+for (const [name, role] of [['دکتر حساب یک', 'doctor'], ['خانم پذیرش', 'staff'], ['دستیار جراحی', 'surgery']]) { const r = await h.call('manager', 'userSave', { u: { name, role, pw: 'Pw-' + Math.random().toString(36).slice(2) + 'A9!' } }); if (!r.ok) console.log('seed', r) }
+const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [];
+const login = async (role, vw = 1280, vh = 800) => { const c = await b.newContext({ viewport: { width: vw, height: vh }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
+try {
+  for (const [vw, vh] of [[1280, 800], [390, 740]]) { const tag = vw > 500 ? 'desktop' : 'phone', nm = tag === 'desktop' ? 'دکتر حساب یک' : 'خانم پذیرش';
+    const p = await login('manager', vw, vh); await W(500); await p.evaluate(async () => { if (!document.getElementById('sMsg')) { const t = [...document.querySelectorAll('button')].find(x => /تنظیمات/.test(x.textContent) && x.offsetParent); if (t) t.click() } }); await W(800); await p.evaluate(() => m14Load()); await W(2500);
+    let s = await p.evaluate(() => { const sel = document.getElementById('m43fSel'), i = document.getElementById('m14Name'); return { sel: !!sel, opts: sel ? [...sel.options].map(o => o.textContent) : [], hid: i ? i.hidden : null, have: (M14.payees || []).map(x => x.name) } });
+    ok(s.sel && s.hid === true && s.opts.includes(nm) && /نام دیگر/.test(s.opts[s.opts.length - 1]) && !s.opts.some(o => s.have.includes(o)), tag + ': «نام تازه» is a list of the personal accounts not yet added', s);
+    await p.evaluate(n => { const S = document.getElementById('m43fSel'); S.value = n; S.dispatchEvent(new Event('change', { bubbles: true })) }, nm); await W(150);
+    s = await p.evaluate(() => ({ v: document.getElementById('m14Name').value, k: document.getElementById('m14Kind').value })); ok(s.v === nm && s.k === (tag === 'desktop' ? 'doc' : 'recep'), tag + ': choosing a name fills it and sets the role from the account', s);
+    await p.evaluate(() => document.getElementById('m14Add').click()); await W(3500);
+    const py = h.sql(`select kind from fin_payee where name='${nm}'`)[0]; s = await p.evaluate(n => ({ msg: document.getElementById('m14Msg').textContent, still: [...document.getElementById('m43fSel').options].some(o => o.textContent === n), chip: [...document.querySelectorAll('#m14Box [data-m14who]')].some(x => x.textContent.trim() === n), docs: (SET.docs || []).includes(n), recep: (SET.recep || []).includes(n) }), nm);
+    ok(py && py.kind === (tag === 'desktop' ? 'doctor' : 'staff') && /اضافه شد/.test(s.msg) && !s.still && s.chip && (tag === 'desktop' ? s.docs : s.recep), tag + ': added to accounting and to the settings list; the name leaves the choices', { py, s });
+    if (tag === 'desktop') { await p.evaluate(() => { const S = document.getElementById('m43fSel'); S.value = '__'; S.dispatchEvent(new Event('change', { bubbles: true })) }); await W(150); ok(await p.evaluate(() => !document.getElementById('m14Name').hidden), 'desktop: «نام دیگر…» opens the box for typing');
+      await p.evaluate(() => { const i = document.getElementById('m14Name'); i.value = 'دکتر دستی'; i.dispatchEvent(new Event('input', { bubbles: true })) }); await p.evaluate(() => document.getElementById('m14Add').click()); await W(3500); ok(!!h.sql(`select 1 y from fin_payee where name='دکتر دستی'`)[0], 'desktop: a typed name still works');
+      await p.evaluate(() => document.getElementById('m14Box').scrollIntoView()); await p.screenshot({ path: 'settings.png' }) }
+    ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), tag + ': no sideways scroll'); await p.context().close(); }
+} catch (e) { console.log('ERR', e.message.slice(0, 500)); bad++ }
+ok(!PE.length, 'no page errors', PE.slice(0, 3)); await b.close(); h.stop(); console.log(bad ? 'FAILED ' + bad : 'ALL OK'); process.exit(bad ? 1 : 0);

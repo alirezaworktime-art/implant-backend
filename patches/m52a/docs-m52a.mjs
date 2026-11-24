@@ -1,0 +1,5 @@
+// adds the m52a line to CLAUDE.md and HANDOFF through work/docs-line.mjs (idempotent). node docs-m52a.mjs
+import { execFileSync } from 'node:child_process'; import path from 'node:path';
+const D = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const add = (key, text) => console.log(execFileSync(process.execPath, [path.join(D, '..', 'docs-line.mjs'), key, text], { encoding: 'utf8' }));
+add('m52a زنده شد', '**2026-11-18 — m52a زنده شد** (ایران و Cloudflare). (۱) «تعیین تکلیف مالی» بعد از جراحی: پارت جراحی و پروتز جدا («هر دو» پنهان)، تخفیف نقدی فقط روی پارت جراحی (اکشن `m52SurgDisc`؛ از حساب بیمار در `surg.waived` کم می‌شود، طرح دست نمی‌خورد). (۲) بیمار تا ارسال طرح به مشاور «منتظر پزشک» با مدت انتظار می‌ماند (فقط نمایش). (۳) بایگانی پزشک شمار طرح‌های فرستاده‌شده را می‌گوید. `work\\m52a\\SPEC.md`؛ t-m52a (۲۷) ALL OK. برگشت: `deploy-m51a.sh` + `node cf.mjs put cf-m51a.mjs`. باگ گزارش‌شده‌ی «پرونده بعد از ذخیره پیدا نمی‌شود» هنوز باز است (سرور سالم بود؛ بازسازی نشد).');

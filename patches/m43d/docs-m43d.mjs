@@ -1,0 +1,5 @@
+// adds the m43d line to CLAUDE.md and HANDOFF through work/docs-line.mjs (idempotent). node docs-m43d.mjs
+import { execFileSync } from 'node:child_process'; import path from 'node:path';
+const D = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const add = (key, text) => console.log(execFileSync(process.execPath, [path.join(D, '..', 'docs-line.mjs'), key, text], { encoding: 'utf8' }));
+add('m43d زنده شد', '**2026-11-17 — m43d زنده شد** (ایران و Cloudflare). روکش موقت: PMMA دندان‌به‌دندان، Essix و دنچر به تفکیک فک، هر کدام با تعرفه‌ی خودش (تنظیمات مدیر: `tmp`، `tmp_es`، `tmp_dn`؛ مشاور در فرم عوض می‌کند). فرم طرح درمان (نشانه `s.tmp.ip.m43d`؛ فقط فرم تازه یا بخش خالیِ تأییدنشده)، پرونده‌ی جا مانده: درمان‌های تازه `esx` و `dnt` با انتخاب فک؛ «مراحل پروتز»: PMMA با دندان، Essix با فک، مبلغ پیش‌فرض هر مرحله از تعرفه‌ی `pr_<نوع>`. دو خدمت حسابداری تازه. `work\\m43d\\SPEC.md`؛ t-m43d (۲۰) و t-m43dui (۲۷) ALL OK. برگشت: `deploy-m43c.sh` + `node cf.mjs put cf-m43c.mjs`.');

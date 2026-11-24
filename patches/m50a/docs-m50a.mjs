@@ -1,0 +1,5 @@
+// adds the m50a line to CLAUDE.md and HANDOFF through work/docs-line.mjs (idempotent). node docs-m50a.mjs
+import { execFileSync } from 'node:child_process'; import path from 'node:path';
+const D = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const add = (key, text) => console.log(execFileSync(process.execPath, [path.join(D, '..', 'docs-line.mjs'), key, text], { encoding: 'utf8' }));
+add('m50a زنده شد', '**2026-11-18 — m50a زنده شد** (ایران و Cloudflare). (A) تیک «نیاز به مشاوره‌ی دندانپزشک عمومی» کار پذیرش از نوع `gen` می‌سازد (کارت بالای «نوبت‌دهی» با «نوبت ویزیت»)؛ (B) بیمارِ جراحی‌شده‌ی بدهکار: `owe` در صف پذیرش و ردیف «مانده‌ی حساب» با «تعیین تکلیف مالی» روی کارت ترخیص؛ برگه روی پارتِ هنوز باز باز می‌شود؛ (C) «تسویه‌ی اختلاف جراحی» در پذیرش فرمی مثل تعیین تکلیف مالی دارد (نقد + کارتخوان/اسکناس/کارت‌به‌کارت + چک‌ها). آنکاوری در پارت جراحی است و دروازه‌ی قبل از ارجاع آن را می‌گیرد. `work\\m50a\\SPEC.md`؛ t-m50a (۲۳) ALL OK. برگشت: `deploy-m49a.sh` + `node cf.mjs put cf-m49a.mjs`.');

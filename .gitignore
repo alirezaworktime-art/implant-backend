@@ -1,0 +1,5 @@
+secrets/local.mjs
+dist/
+node_modules/
+*.db
+*.db-*

@@ -1,0 +1,41 @@
+// t-m46aui: reception sends a confirmed patient straight to surgery from the work list (no appointment); the surgeon sees the patient's brand. Run: WORKER=<m46a bundle> node t-m46aui.mjs
+import { createRequire } from 'node:module';
+const req = createRequire('/opt/npm-tools/node_modules/x.js'); const { chromium } = req('playwright-core');
+const A = await import('file:///home/claude/w/audit/A.mjs'); const { uuid } = A; const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0;
+const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 700))); if (!c) bad++ };
+const mk = async (nm, pay) => { const id = await h.add(nm); await h.plan(id, nm); await h.confirm(id, nm, 'book'); if (pay) await h.must('consultant', 'payAdd', { id, pid: 'x-' + uuid(), pay: { kind: 'cash', pos: '', acct: '', part: 's', amount: 60000000, by: 'م', note: '' }, sendId: uuid() }); return id };
+const OLD = A.REC.queueAdd[0].req.id; const nR = 'بیمار برند بعداً', idR = await h.add(nR); await h.plan(idR, nR); { const q = JSON.parse(JSON.stringify(A.REC.confirm[0].req).split(OLD).join(idR).split('رضا آزمایشی').join(nR)); delete q.action; q.record.data.updatedAt = new Date(Date.now() + 1000).toISOString(); q.next = 'book'; q.sendId = uuid(); q.record.data.brand = 'ref'; q.record.data.pay = Object.assign({}, q.record.data.pay, { blater: 1 }); await h.must('consultant', 'queueOpen', { id: idR }); q.record.data._v = h.sql(`select json_extract(data,'$.updatedAt') v from plans where id='${idR}'`)[0].v; await h.must('consultant', 'confirm', q) }
+const n1 = 'بیمار پرداخت‌کرده', id1 = await mk(n1, true), n2 = 'بیمار بدهکار', id2 = await mk(n2, false), n3 = 'بیمار موبایل', id3 = await mk(n3, true);
+const st = id => h.sql(`select queue, (select count(*) from appts a where a.plan=plans.id) ap, (select count(*) from tasks t where t.plan=plans.id and t.kind='book' and t.done=0) bk from plans where id='${id}'`)[0];
+const b = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--no-sandbox'] }); const PE = [];
+const login = async (role, vw = 1280, vh = 800) => { const c = await b.newContext({ viewport: { width: vw, height: vh }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage(); p.on('pageerror', e => PE.push(e.message.slice(0, 200))); await p.goto(h.url); await p.click(`[data-lrole="${role}"]`); await p.fill('#lg_pw', A.PW[role]); await p.click('#lgGo'); await W(3000); await p.evaluate(() => document.querySelectorAll('.hintc,#chgSheet').forEach(x => x.remove())); return p };
+const btn = (p, id) => p.evaluate(id => { const b = document.querySelector(`button[data-m46][data-tosurg="${id}"]`); return b ? { txt: b.textContent, vis: b.offsetParent !== null, n: document.querySelectorAll(`button[data-m46][data-tosurg="${id}"]`).length, cards: [...document.querySelectorAll('button[data-tbook]')].filter(x => { const k = TASKS.find(t => t.id === x.dataset.tbook); return k && k.plan === id && k.kind === 'book' }).length, per: Math.max(...[...document.querySelectorAll('.acts')].map(a => a.querySelectorAll(`button[data-m46][data-tosurg="${id}"]`).length)) } : null }, id);
+const ask = p => p.evaluate(() => { const s = document.getElementById('uxAskSh'); return s && !s.hidden ? s.innerText.slice(0, 300) : '' });
+try {
+  for (const [vw, vh] of [[1280, 800], [390, 740]]) { const tag = vw > 500 ? 'desktop' : 'phone', id = tag === 'desktop' ? id1 : id3, nm = tag === 'desktop' ? n1 : n3; const p = await login('staff', vw, vh); await W(800);
+    await p.evaluate(() => { try { renderTasks() } catch (e) { } }); await W(300); let s = await btn(p, id);
+    ok(s && s.n === s.cards && s.per === 1 && /ارجاع مستقیم به جراحی/.test(s.txt), tag + ': every «نوبت جراحی» work row has «ارجاع مستقیم به جراحی» (once per row)', s);
+    await p.evaluate(id => document.querySelector(`button[data-m46][data-tosurg="${id}"]`).click(), id); await W(400); let t = await ask(p);
+    ok(t.includes(nm) && /بدون ثبت نوبت/.test(t) && st(id).queue !== 'surgery', tag + ': it asks first and sends nothing yet', { t, q: st(id) });
+    await p.evaluate(() => document.getElementById('uxAskNo').click()); await W(500); ok(st(id).queue !== 'surgery' && st(id).bk === 1, tag + ': «نه» leaves the patient where he was', st(id));
+    await p.evaluate(id => document.querySelector(`button[data-m46][data-tosurg="${id}"]`).click(), id); await W(400); await p.evaluate(() => document.getElementById('uxAskOk').click()); await W(3000); s = st(id);
+    ok(s.queue === 'surgery' && s.ap === 0 && s.bk === 0, tag + ': «بله» → the patient is in the surgery cartable, no appointment was made, the «نوبت جراحی» work is closed', s);
+    ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), tag + ': no sideways scroll');
+    if (tag === 'desktop') { // payment gate stays
+      await p.evaluate(() => { try { renderTasks() } catch (e) { } }); await W(300); await p.evaluate(id => document.querySelector(`button[data-m46][data-tosurg="${id}"]`).click(), id2); await W(400); await p.evaluate(() => document.getElementById('uxAskOk').click()); await W(3000);
+      const gate = await p.evaluate(() => { const q = document.getElementById('q9Sh'); return { q9: !!(q && !q.hidden), txt: q ? q.innerText.slice(0, 160) : '' } });
+      ok(st(id2).queue !== 'surgery' && gate.q9, 'desktop: a patient who has not paid the surgery part is stopped by the usual payment sheet', { gate, s: st(id2) }) }
+    if (tag === 'desktop') { await p.evaluate(() => { const q = document.getElementById('q9Sh'); if (q) q.hidden = true; try { renderTasks() } catch (e) { } }); await W(300); await p.evaluate(id => document.querySelector(`button[data-m46][data-tosurg="${id}"]`).click(), idR); await W(400); await p.evaluate(() => document.getElementById('uxAskOk').click()); await W(3500);
+      const o = await p.evaluate(() => { const S = [...document.querySelectorAll('.sheet')].filter(x => !x.hidden && x.id !== 'uxAskSh'); return { ids: S.map(x => x.id), txt: S.map(x => x.innerText.slice(0, 200)).join(' | ') } });
+      ok(st(idR).queue !== 'surgery' && o.ids.length >= 1 && /برند|تعیین تکلیف مالی/.test(o.txt), 'desktop: a patient whose brand is not chosen yet is not sent; the sheet that asks the brand opens by itself', { o, s: st(idR) }) }
+    await p.context().close(); }
+  // the surgeon sees the brand
+  const p = await login('surgery'); await p.evaluate(nm => { goTile('surg'); openSurg(QITEMS.find(q => q.name === nm)) }, n1); await W(1800);
+  const br = await p.evaluate(() => ({ line: (document.querySelector('#sgPlan .m46b') || {}).textContent || '', first: document.getElementById('sgPlan').firstElementChild.className, brand: SURG.rec.brand, n: (renderSurg(), document.querySelectorAll('#sgPlan .m46b').length) }));
+  ok(/برند ایمپلنت بیمار: /.test(br.line) && br.first === 'm46b' && br.n === 1 && (br.brand === 'ref' ? /هنوز انتخاب نشده/.test(br.line) : !/انتخاب نشده/.test(br.line)), 'surgery sheet: the plan summary starts with the brand of the patient', br);
+  const u = await p.evaluate(() => { const S = blankSections(); S.imp.sel.UR6 = true; S.imp.sel.UR5 = true; S.imp.sp = [{ k: 'UR6', b: 'Root', d: '4', l: '10' }]; const none = blankSections(); return { it: m46a.brandLine({ s: S, brand: 'it' }), ref: m46a.brandLine({ s: S, brand: 'ref' }), none: m46a.brandLine({ s: none, brand: 'ko' }) } });
+  ok(/ایتالیایی/.test(u.it) && /موارد خاص: .*Root/.test(u.it) && /هنوز انتخاب نشده/.test(u.ref) && u.none === '', 'brand line: brand name + special teeth; «هنوز انتخاب نشده» when reception has not chosen; nothing for a plan without implants', u);
+  await p.context().close();
+  const pd = await login('doctor'); await pd.evaluate(({ id }) => openFile(id, 'x'), { id: id1 }); await W(2000); ok(await pd.evaluate(() => /برند ایمپلنت بیمار/.test((document.querySelector('#pfBody .tl .m46b') || {}).textContent || '')), 'patient file (doctor): the brand is written under «تأیید طرح درمان»'); await pd.context().close();
+} catch (e) { console.log('ERR', e.message.slice(0, 600)); bad++ }
+ok(!PE.length, 'no page errors', PE.slice(0, 3)); await b.close(); h.stop(); console.log(bad ? 'FAILED ' + bad : 'ALL OK'); process.exit(bad ? 1 : 0);

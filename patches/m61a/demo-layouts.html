@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>«ادامه درمان» — سه قالب</title>
+<style>
+:root{--bg:#edf0f3;--s:#fff;--sunk:#f5f7f9;--ink:#17212b;--mu:#5d6a77;--line:#d8dfe6;--ac:#0a7680;--acs:#dcefef;--lap:#34519a;--ok:#25744a;--oks:#e1f1e7;--bad:#b3261e;--bads:#fbe5e3;--warn:#8f5408;--warns:#fbf0de}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Vazirmatn,Tahoma,"Segoe UI",sans-serif;font-size:15px;line-height:1.65}
+.wrap{max-width:640px;margin:0 auto;padding:12px 12px 110px}
+h1{font-size:1.05rem;margin:2px 0}.sub{color:var(--mu);font-size:.8rem;margin:0 0 10px}
+.tabs{display:flex;gap:4px;background:var(--sunk);border:1px solid var(--line);border-radius:14px;padding:4px;position:sticky;top:6px;z-index:5}
+.tabs button{flex:1;font:inherit;font-weight:700;font-size:.84rem;border:0;background:transparent;color:var(--mu);border-radius:10px;padding:8px 4px;cursor:pointer;line-height:1.3}
+.tabs button small{display:block;font-weight:500;font-size:.68rem}
+.tabs button[aria-pressed=true]{background:var(--s);color:var(--ac);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.pt{background:var(--s);border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin-top:10px;display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
+.pt b{font-size:1rem}.pt span{color:var(--mu);font-size:.78rem}.pt .last{width:100%;font-size:.8rem;color:var(--mu)}
+.card{background:var(--s);border:1px solid var(--line);border-radius:18px;padding:14px;margin-top:10px;display:flex;flex-direction:column;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.86rem;border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:99px;padding:5px 13px;cursor:pointer;min-height:36px}
+.chip[aria-pressed=true]{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:700}
+.chip.r[aria-pressed=true]{background:var(--bad);border-color:var(--bad)}
+.chip:disabled{opacity:.4}
+.q{font-weight:800;font-size:.92rem}.q small{color:var(--mu);font-weight:500}
+.note{color:var(--mu);font-size:.78rem;margin:0}
+.btn{font:inherit;font-weight:800;border:0;border-radius:12px;padding:10px 16px;background:var(--ac);color:#fff;cursor:pointer;min-height:46px}
+.btn.gh{background:var(--s);color:var(--ac);border:1px solid var(--line)}
+textarea{font:inherit;width:100%;border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:8px 10px;min-height:52px;resize:vertical}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opts button{font:inherit;text-align:right;border:1px solid var(--line);background:var(--sunk);border-radius:12px;padding:8px 12px;cursor:pointer;color:var(--ink)}
+.opts button b{display:block;font-size:.9rem}.opts button small{color:var(--mu);font-size:.74rem}
+.opts button[aria-pressed=true]{border-color:var(--bad);background:var(--bads)}
+.red{border:1px solid var(--bad);background:#fffafa;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.pill{display:inline-block;border-radius:99px;padding:0 9px;font-size:.74rem;font-weight:700;background:var(--acs);color:var(--ac)}
+.pill.r{background:var(--bads);color:var(--bad)}.pill.w{background:var(--warns);color:var(--warn)}
+/* A: wizard */
+.steps{display:flex;gap:6px}.steps i{flex:1;height:5px;border-radius:5px;background:var(--line)}.steps i.on{background:var(--ac)}
+.big{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.big button{font:inherit;font-weight:700;text-align:center;border:1px solid var(--line);background:var(--sunk);border-radius:14px;padding:14px 8px;cursor:pointer;min-height:58px;color:var(--ink)}
+.big button[aria-pressed=true]{background:var(--ac);border-color:var(--ac);color:#fff}
+.big button.r[aria-pressed=true]{background:var(--bad);border-color:var(--bad)}
+.nav{display:flex;gap:8px}.nav .btn{flex:1}
+/* B: chart */
+.chart{direction:ltr;display:flex;flex-direction:column;align-items:center;gap:4px}
+.jaw{display:flex;gap:2px;direction:ltr}.jaw+.jaw{border-top:2px solid #8a97a3;padding-top:4px}.mid{width:2px;background:#8a97a3;margin:0 3px}
+.t{width:min(32px,calc((100vw - 90px)/16));height:44px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);font:inherit;font-size:.78rem;font-weight:700;color:#aab3bc;padding:0;cursor:default;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.t.im{cursor:pointer;color:#fff;background:var(--ac);border-color:var(--ac)}.t.im small{font-size:.55rem;font-weight:600}
+.t.po{color:#fff;background:var(--lap);border-color:var(--lap)}
+.t.fl{background:var(--bad);border-color:var(--bad)}.t.wt{background:var(--warn);border-color:var(--warn)}
+.t.sel{outline:3px solid #f2b705;outline-offset:1px}
+.lg{font-size:.72rem;color:var(--mu);text-align:center}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin:0 5px 0 2px;vertical-align:-1px}
+/* C: rows */
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:start;padding:9px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}.row>span{font-weight:700;font-size:.84rem;color:var(--mu);padding-top:6px}
+@media(max-width:420px){.row{grid-template-columns:1fr}.row>span{padding:0}}
+.tsel{display:flex;flex-wrap:wrap;gap:6px}
+.tsel label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:3px 8px;background:var(--sunk);font-size:.84rem}
+.tsel select{font:inherit;font-size:.82rem;border:0;background:transparent;color:var(--ac);font-weight:700}
+.bar{position:fixed;inset-inline:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid var(--line);padding:9px 12px calc(9px + env(safe-area-inset-bottom));display:flex;justify-content:center}
+.bar .in{max-width:640px;width:100%;display:flex;gap:8px;align-items:center}.bar small{flex:1;color:var(--mu);font-size:.74rem;line-height:1.4}
+.sheet{position:fixed;inset:0;background:rgba(10,18,24,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet .in{background:var(--s);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px;display:flex;flex-direction:column;gap:10px;max-height:85%;overflow:auto}
+.sum div{padding:5px 0;border-bottom:1px dashed var(--line);font-size:.86rem}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>«ادامه درمان» — سه قالب با همان گزینه‌ها</h1>
+  <p class="sub">آزمایشی، بیمار ساختگی. هر سه قالب همان کار را می‌کنند؛ فقط چیدمان فرق دارد.</p>
+  <div class="tabs"><button type="button" data-tab="A" aria-pressed="true">قالب الف<small>قدم‌به‌قدم</small></button><button type="button" data-tab="B" aria-pressed="false">قالب ب<small>روی چارت دندان</small></button><button type="button" data-tab="C" aria-pressed="false">قالب ج<small>یک صفحه‌ی فشرده</small></button></div>
+  <div class="pt"><b>بیمار نمونه</b><span>پرونده ۴۵۲۱ · تک‌واحد و بریج · مرحله: <b id="lo" style="font-size:.85rem"></b></span><div class="last">جلسه‌ی قبل ۱۴۰۵/۰۸/۱۰: قالب‌گیری، سفارش رزین رفت · مرحله‌ی بعدِ ثبت‌شده: تست رزین</div></div>
+  <div id="view"></div>
+</div>
+<div class="bar"><div class="in"><small>هیچ فیلدی اجباری نیست · پزشک: د. نمونه (از ورود)</small><button class="btn" type="button" id="save">ثبت ادامه درمان</button></div></div>
+<div class="sheet" id="sh" hidden><div class="in"><b>با ثبت (آزمایشی):</b><div class="sum" id="sum"></div><button class="btn gh" type="button" id="shX">بستن</button></div></div>
+<script>
+const ST={heal:'جوش خوردن',impr:'قالب‌گیری',lab:'لابراتوار',rabt:'تست اباتمنت',frame:'تست فریم',tryin:'تست رزین',deliv:'تحویل',done:'تحویل شد'},ORD=Object.keys(ST);
+const IMP={UR6:'tryin',UL4:'tryin',UL6:'tryin'},PON=['UL5'],TN={UR6:'بالا راست ۶',UL4:'بالا چپ ۴',UL6:'بالا چپ ۶',UL5:'بالا چپ ۵'};
+const W={impr:'قالب‌گیری',rabt:'تست اباتمنت',frame:'تست فریم',tryin:'تست رزین',deliv:'تحویل روکش',other:'سایر'},R={ok:'تأیید شد',fix:'نیاز به اصلاح',redo:'تکرار شود'};
+const FO={surg:['ارجاع به جراح برای معاینه','پروتز منتظر؛ جراح تصمیم می‌گیرد'],stop:['توقف پروتز تا کاشت دوباره','کل پروتز می‌ایستد'],pon:['به جایش پونتیک و ادامه','این دندان پونتیک می‌شود'],wo:['بدون این دندان ادامه','این دندان از پروتز خارج می‌شود']};
+const NX={impr:'قالب‌گیری',rabt:'تست اباتمنت',frame:'تست فریم',tryin:'تست رزین',deliv:'تحویل روکش',chk:'چکاپ'},WH={'1w':'۱ هفته','2w':'۲ هفته','3w':'۳ هفته','1m':'۱ ماه','3m':'۳ ماه','x':'تاریخ دلخواه'};
+const AS={a:'خانم نمونه',b:'خانم دوم',c:'آقای سوم'};
+const S={tab:'A',step:1,work:'tryin',wt:['UR6','UL4','UL6'],res:'ok',ev:'none',ft:[],fo:'',rem:'',mon:'3',asst:'',nx:'deliv',when:'2w',sel:'',more:false};
+const nxOf=w=>({impr:'tryin',rabt:'tryin',frame:'tryin',tryin:'deliv',deliv:'chk'}[w]||'');
+const failOf=k=>S.ev==='fail'&&S.ft.includes(k)&&S.fo?S.fo:'';
+const wait=()=>S.ev==='fail'&&S.ft.length&&(S.fo==='surg'||S.fo==='stop');
+const ch=(o,cur,g,cl='')=>Object.keys(o).map(k=>`<button type="button" class="chip ${cl}" data-g="${g}" data-v="${k}" aria-pressed="${Array.isArray(cur)?cur.includes(k):cur===k}">${o[k]}</button>`).join('');
+const big=(o,cur,g,cl='')=>`<div class="big">${Object.keys(o).map(k=>`<button type="button" class="${cl}" data-g="${g}" data-v="${k}" aria-pressed="${cur===k}">${o[k]}</button>`).join('')}</div>`;
+const live=()=>Object.keys(IMP).filter(k=>!failOf(k)||failOf(k)==='surg');
+const teethCh=(g,cur,cl='')=>Object.keys(IMP).map(k=>`<button type="button" class="chip ${cl}" data-g="${g}" data-v="${k}" aria-pressed="${cur.includes(k)}" ${g==='wt'&&!live().includes(k)?'disabled':''}>${TN[k]}</button>`).join('');
+function failBox(){return `<div class="red"><b>فیل ایمپلنت — کدام دندان؟</b><div class="chips">${teethCh('ft',S.ft,'r')}</div>
+  <div class="opts">${Object.keys(FO).map(k=>`<button type="button" data-g="fo" data-v="${k}" aria-pressed="${S.fo===k}"><b>${FO[k][0]}</b><small>${FO[k][1]}</small></button>`).join('')}</div>
+  ${S.fo&&S.fo!=='surg'?`<div><b style="font-size:.86rem">امروز برداشته شد؟</b><div class="chips">${ch({y:'بله',n:'نه، هنوز در دهان است'},S.rem,'rem')}</div></div>${S.rem==='y'&&S.fo!=='wo'?`<div><span class="note">کاشت دوباره چند ماه بعد؟</span><div class="chips">${ch({'2':'۲','3':'۳','4':'۴','6':'۶'},S.mon,'mon')}</div></div>`:''}`:''}
+  ${S.fo==='surg'?'<p class="note">منشی نوبت معاینه می‌دهد؛ جراح «ادامه»، توقف، پونتیک یا بدون دندان را می‌زند.</p>':''}</div>`}
+function nextBox(){return wait()?`<span class="pill w">${S.fo==='surg'?'منتظر معاینه‌ی جراح':'منتظر کاشت دوباره'} — مرحله‌ی بعد بعداً</span>`:`<div class="chips">${ch(NX,S.nx,'nx')}</div><div class="chips">${ch(WH,S.when,'when')}</div>`}
+/* A: wizard */
+function vA(){const st=S.step;let b='';
+  if(st===1)b=`<div class="q">امروز چه کاری انجام شد؟</div>${big(W,S.work,'work')}<div class="q">برای کدام دندان‌ها؟ <small>همه انتخاب شده</small></div><div class="chips">${teethCh('wt',S.wt)}</div><div class="q">نتیجه</div><div class="chips">${ch(R,S.res,'res')}</div><textarea placeholder="توضیح (اختیاری)"></textarea>`;
+  if(st===2)b=`<div class="q">اتفاق خاصی افتاد؟</div>${big({none:'نه، همه چیز خوب بود',fail:'فیل ایمپلنت',prob:'مشکل دیگر'},S.ev,'ev','r')}${S.ev==='fail'?failBox():''}${S.ev==='prob'?'<textarea placeholder="مثلاً شل شدن پیچ UR6"></textarea>':''}`;
+  if(st===3)b=`<div class="q">مرحله‌ی بعد <small>پیشنهاد مسیر درمان</small></div>${nextBox()}<div class="q">دستیار <small>اختیاری</small></div><div class="chips">${ch(AS,S.asst,'asst')}</div>
+    <div class="q">مرحله‌ی دندان‌ها بعد از این جلسه</div><div class="chips">${Object.keys(IMP).map(k=>`<span class="pill ${failOf(k)&&failOf(k)!=='surg'?'r':failOf(k)?'w':''}">${TN[k]}: ${failOf(k)?FO[failOf(k)][0].split(' ').slice(0,2).join(' '):ST[after(k)]}</span>`).join('')}</div><p class="note">اگر مرحله‌ی یک دندان فرق دارد، در قدم ۱ فقط دندان‌های امروز را بزنید.</p>`;
+  return `<div class="card"><div class="steps">${[1,2,3].map(i=>`<i class="${i<=st?'on':''}"></i>`).join('')}</div>${b}<div class="nav">${st>1?'<button class="btn gh" type="button" data-step="-1">قبلی</button>':''}${st<3?'<button class="btn gh" type="button" data-step="1">بعدی</button>':''}</div></div>`}
+function after(k){if(!S.wt.includes(k))return IMP[k];return S.res==='ok'&&S.nx&&!wait()?({deliv:'deliv',chk:'done',tryin:'tryin'}[S.nx]||S.nx):IMP[k]}
+/* B: chart */
+function vB(){const T=k=>{const im=k in IMP,po=PON.includes(k),f=failOf(k);const n=k.slice(2);return `<button type="button" class="t ${im?'im':''} ${po?'po':''} ${f&&f!=='surg'?'fl':f?'wt':''} ${S.sel===k?'sel':''}" ${im?`data-tk="${k}"`:''}>${n}</button>`};
+  const row=j=>{let r='';for(let i=8;i>=1;i--)r+=T(j+'R'+i);r+='<span class="mid"></span>';for(let i=1;i<=8;i++)r+=T(j+'L'+i);return `<div class="jaw">${r}</div>`};
+  const k=S.sel;let panel='';
+  if(k){const f=failOf(k);panel=`<div class="card"><div class="q">${TN[k]} <small>مرحله: ${ST[IMP[k]]}</small></div>
+    <div class="chips">${ORD.map(s=>`<button type="button" class="chip" data-tst="${s}" aria-pressed="${IMP[k]===s}">${ST[s]}</button>`).join('')}</div>
+    <div class="chips"><button type="button" class="chip" data-g="wt" data-v="${k}" aria-pressed="${S.wt.includes(k)}">کار امروز روی این دندان</button><button type="button" class="chip r" data-tfail="${k}" aria-pressed="${S.ft.includes(k)}">فیل ایمپلنت</button></div>${S.ft.includes(k)?failBox():''}</div>`}
+  return `<div class="card"><div class="q">روی هر ایمپلنت بزنید <small>مرحله، کار امروز، فیل</small></div><div class="chips">${Object.keys(IMP).map(k=>`<span class="pill ${failOf(k)&&failOf(k)!=='surg'?'r':failOf(k)?'w':''}">${TN[k]}: ${failOf(k)?FO[failOf(k)][0].split(' ').slice(0,2).join(' '):ST[IMP[k]]}</span>`).join('')}</div><div class="chart">${row('U')}${row('L')}</div>
+    <div class="lg"><i style="background:var(--ac)"></i>ایمپلنت<i style="background:var(--lap)"></i>پونتیک<i style="background:var(--bad)"></i>فیل<i style="background:var(--warn)"></i>منتظر جراح</div></div>${panel}
+    <div class="card"><div class="q">امروز <small>برای ${S.wt.map(x=>TN[x]).join('، ')||'—'}</small></div><div class="chips">${ch(W,S.work,'work')}</div><div class="chips">${ch(R,S.res,'res')}</div>
+    <div class="chips">${ch({none:'اتفاق خاصی نیفتاد',prob:'مشکل دیگر'},S.ev==='fail'?'':S.ev,'ev')}</div>${S.ev==='prob'?'<textarea placeholder="مشکل"></textarea>':''}<textarea placeholder="توضیح (اختیاری)"></textarea></div>
+    <div class="card"><div class="q">مرحله‌ی بعد</div>${nextBox()}<div class="q">دستیار <small>اختیاری</small></div><div class="chips">${ch(AS,S.asst,'asst')}</div></div>`}
+/* C: compact rows */
+function vC(){return `<div class="card"><div class="rows">
+  <div class="row"><span>مرحله‌ی دندان‌ها</span><div class="tsel">${Object.keys(IMP).map(k=>failOf(k)&&failOf(k)!=='surg'?`<label style="border-color:var(--bad);color:var(--bad)">${TN[k]} · فیل</label>`:`<label>${TN[k]}<select data-tsel="${k}">${ORD.map(s=>`<option value="${s}" ${IMP[k]===s?'selected':''}>${ST[s]}</option>`).join('')}</select></label>`).join('')}</div></div>
+  <div class="row"><span>کار امروز</span><div class="chips">${ch(W,S.work,'work')}</div></div>
+  <div class="row"><span>روی</span><div class="chips">${teethCh('wt',S.wt)}</div></div>
+  <div class="row"><span>نتیجه</span><div class="chips">${ch(R,S.res,'res')}</div></div>
+  <div class="row"><span>اتفاق</span><div><div class="chips">${ch({none:'نه',fail:'فیل ایمپلنت',prob:'مشکل دیگر'},S.ev,'ev','r')}</div>${S.ev==='fail'?'<div style="margin-top:8px">'+failBox()+'</div>':''}${S.ev==='prob'?'<textarea style="margin-top:8px" placeholder="مشکل"></textarea>':''}</div></div>
+  <div class="row"><span>مرحله‌ی بعد</span><div style="display:flex;flex-direction:column;gap:6px">${nextBox()}</div></div>
+  <div class="row"><span>دستیار</span><div class="chips">${ch(AS,S.asst,'asst')}</div></div>
+  <div class="row"><span>توضیح</span><textarea placeholder="اختیاری"></textarea></div></div></div>`}
+function draw(){Object.keys(IMP).forEach(k=>{const f=failOf(k);if(f&&f!=='surg')S.wt=S.wt.filter(x=>x!==k)});
+  document.getElementById('view').innerHTML={A:vA,B:vB,C:vC}[S.tab]();
+  const lo=ORD.find(s=>Object.keys(IMP).some(k=>!failOf(k)&&IMP[k]===s));document.getElementById('lo').textContent=wait()?(S.fo==='surg'?'منتظر معاینه‌ی جراح':'متوقف تا کاشت دوباره'):(ST[lo]||'—')}
+document.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;
+  if(d.tab){S.tab=d.tab;document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',b===t));draw();scrollTo({top:0});return}
+  if(d.step){S.step=Math.max(1,Math.min(3,S.step+Number(d.step)));draw();return}
+  if(d.tk){S.sel=S.sel===d.tk?'':d.tk;draw();return}
+  if(d.tst){IMP[S.sel]=d.tst;draw();return}
+  if(d.tfail){const k=d.tfail;S.ft=S.ft.includes(k)?S.ft.filter(x=>x!==k):S.ft.concat(k);S.ev=S.ft.length?'fail':'none';draw();return}
+  if(d.g){const g=d.g,v=d.v;if(Array.isArray(S[g]))S[g]=S[g].includes(v)?S[g].filter(x=>x!==v):S[g].concat(v);else S[g]=S[g]===v&&!['work','ev','nx','when'].includes(g)?'':v;
+    if(g==='work'&&nxOf(v))S.nx=nxOf(v);if(g==='res'&&v!=='ok')S.nx=S.work;draw();return}
+  if(t.id==='save'){const L=['پرونده: '+W[S.work]+' برای '+(S.wt.map(x=>TN[x]).join('، ')||'—')+' — '+R[S.res]+' · د. نمونه'+(S.asst?' + '+AS[S.asst]:'')];
+    if(S.ev==='fail'&&S.ft.length)L.push('فیل: '+S.ft.map(x=>TN[x]).join('، ')+' → '+(FO[S.fo]||['بدون تصمیم'])[0]+(S.rem==='y'?' · برداشته شد؛ کاشت دوباره '+S.mon+' ماه بعد':S.rem==='n'?' · کار منشی: نوبت برداشتن':''));
+    if(S.fo==='surg'&&S.ft.length)L.push('کار منشی: نوبت معاینه‌ی جراح');
+    if(!wait())L.push('مرحله‌ی بعد: '+NX[S.nx]+' — '+WH[S.when]+' بعد → کار منشی: نوبت');
+    document.getElementById('sum').innerHTML=L.map(x=>'<div>'+x+'</div>').join('');document.getElementById('sh').hidden=false;return}
+  if(t.id==='shX')document.getElementById('sh').hidden=true});
+document.addEventListener('change',e=>{const s=e.target.closest('[data-tsel]');if(s){IMP[s.dataset.tsel]=s.value;draw()}});
+draw();
+</script>
+</body>
+</html>

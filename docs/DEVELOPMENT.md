@@ -30,6 +30,10 @@ and uses Playwright (`playwright-core`, Chrome at `$CHROME` or `/usr/bin/google-
 Known failing: `m22/t-m22.mjs` (one check), tests that need `$OLD` (an older bundle: `m41b/t-m41b.mjs`, `m51b/t-restart*.mjs`).
 
 ## Release (owner's rules)
+On the owner's laptop: `bash claude-code-kit/build-repo.sh <tag>` (Git Bash) builds `iran-worker-<tag>.mjs` and `cf-<tag>.mjs` from the three repos
+(`--tag` puts the marker `---------- <tag> (` into the page) and writes `deploy-<tag>.sh`, `check-<tag>.sh`, `pub-<tag>.sh` the same way as the patch releases;
+then `bash claude-code-kit/work/<tag>/pub-<tag>.sh`.
+
 Ask the owner before every change and every release. Never commit passwords, keys or patient data. After a release: md5 of the
 deployed file, version marker on both addresses, service status, error count; keep the previous bundle for rollback.
 `secrets/local.mjs` (git-ignored) holds the real values; `node scripts/secrets-from-bundle.mjs <iran bundle> <cf bundle> ../implant-frontend`

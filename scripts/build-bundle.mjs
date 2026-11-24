@@ -5,6 +5,7 @@
 import fs from 'node:fs'; import path from 'node:path'; import url from 'node:url';
 const here = path.dirname(url.fileURLToPath(import.meta.url)), root = path.join(here, '..');
 const av = process.argv.slice(2), ti = av.indexOf('--target'), target = ti >= 0 ? av.splice(ti, 2)[1] : 'iran';
+const gi = av.indexOf('--tag'), tag = gi >= 0 ? av.splice(gi, 2)[1] : ''; // release name, e.g. r1: the page gets the marker «---------- r1 (» that the deploy checks look for
 const [fe, tab, out = path.join(root, 'dist', 'worker.mjs')] = av;
 if (!fe || !tab) { console.error('usage: node scripts/build-bundle.mjs <frontend dir> <tablet dir> [out]'); process.exit(2); }
 let S = { PW_HASH: {}, BACKUP_HASH: '', IMPORT_KEY: '', SENDER: 'user@example.com', APPS_SCRIPT_DEPLOYMENT_ID: 'APPS_SCRIPT_DEPLOYMENT_ID', LF_DEF: { lfdoc: 'dev-lfdoc', lflab: 'dev-lflab' } };
@@ -16,7 +17,9 @@ const mail = t => t.split('sender@example.com').join(S.SENDER || 'sender@example
 const gas = t => mail(phone(S.APPS_SCRIPT_DEPLOYMENT_ID ? t.split('APPS_SCRIPT_DEPLOYMENT_ID').join(S.APPS_SCRIPT_DEPLOYMENT_ID) : t));
 const H = 'text/html; charset=utf-8', J = 'text/javascript; charset=utf-8', P = 'image/png';
 const txt = (t, d) => ({ t, d, b: 0 }), bin = (t, buf) => ({ t, d: buf.toString('base64'), b: 1 });
-const index = gas(T('index.html', 'utf8'));
+let index = gas(T('index.html', 'utf8'));
+if (tag) { let sha = ''; try { sha = (await import('node:child_process')).execFileSync('git', ['-C', fe, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch (e) { }
+  const k = index.lastIndexOf('</body>'); index = index.slice(0, k) + `<!-- ---------- ${tag} (repo build${sha ? ' frontend ' + sha : ''}) -->\n` + index.slice(k); }
 const A = {
   '/': txt(H, index),
   '/manifest.webmanifest': txt('application/manifest+json; charset=utf-8', T('manifest.webmanifest', 'utf8')),

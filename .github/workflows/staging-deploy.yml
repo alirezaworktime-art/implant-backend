@@ -1,0 +1,45 @@
+# Deploy the staging copy: every push to 'staging' here, a request from impyar-frontend / impyar-tablet (their own
+# 'staging' pushes), or the Run button. The server fetches the 'staging' branches of all three repos, builds, deploys,
+# checks health, and rolls back if unhealthy (ops/staging/deploy-staging.sh). One deploy at a time.
+# Needs: secret STAGING_SSH_KEY; variables STAGING_HOST, STAGING_SSH_PORT, STAGING_KNOWN_HOSTS, STAGING_URL_HOST.
+name: Deploy staging
+on:
+  push:
+    branches: [staging]
+  repository_dispatch:
+    types: [staging-deploy]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: staging }
+      - name: Deploy on the staging server
+        env:
+          KEY: ${{ secrets.STAGING_SSH_KEY }}
+          HOST: ${{ vars.STAGING_HOST }}
+          PORT: ${{ vars.STAGING_SSH_PORT }}
+          KNOWN: ${{ vars.STAGING_KNOWN_HOSTS }}
+        run: |
+          [ -n "$KEY" ] || { echo "secret STAGING_SSH_KEY is missing"; exit 1; }
+          [ -n "$HOST" ] && [ -n "$PORT" ] && [ -n "$KNOWN" ] || { echo "variables STAGING_HOST / STAGING_SSH_PORT / STAGING_KNOWN_HOSTS are missing"; exit 1; }
+          echo "trigger: ${{ github.event_name }} from ${{ github.event.client_payload.repo || github.repository }} ${{ github.event.client_payload.sha || github.sha }}"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/staging_key; chmod 600 ~/.ssh/staging_key
+          printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
+          tr -d '\r' < ops/staging/deploy-staging.sh | ssh -i ~/.ssh/staging_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=30 root@"$HOST" 'bash -s staging'
+          rm -f ~/.ssh/staging_key
+      - name: Check from outside
+        env:
+          URL_HOST: ${{ vars.STAGING_URL_HOST }}
+        run: |
+          code=$(curl -s -o /dev/null -m 30 -w '%{http_code}' "https://$URL_HOST/"); echo "https://$URL_HOST/ → $code"
+          curl -s -m 30 "https://$URL_HOST/" | grep -oE -- '---------- stg-[0-9a-f]+ \(' | head -1
+          [ "$code" = 200 ]

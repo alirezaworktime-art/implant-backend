@@ -22,12 +22,19 @@ The three repos must sit side by side (the scripts look for `../impyar-frontend`
 ## Tests
 ```
 npm test                     # build + patches/m61a/t-m61a.mjs
-npm run test:all             # build + the full regression (≈90 tests, ~10 min, 3 parallel streams)
-WORKER=$PWD/dist/worker.mjs node --no-warnings --import ./patches/m23/sameday-shim.mjs patches/m60a/t-m60a.mjs
+npm run test:all             # build + the full regression (90 tests, ~10 min, 4 parallel streams) → patches/reg-all.out
+node scripts/run-test.mjs patches/m60a/t-m60a.mjs   # one test (sets WORKER, the shim and, on Windows, CHROME)
 ```
+All three work from PowerShell, cmd, Git Bash and Linux. `test:all` runs `scripts/reg-all.mjs`, which reads the test list from
+`patches/reg-all.sh` (kept as it was) — `REG_STREAMS` / `REG_TIMEOUT` (seconds) change streams and per-test timeout; exit code is 0, read the summary line.
+On GitHub: Actions → **Full regression** → Run workflow (Linux, manual only; result in the `reg-linux` artifact).
+
 Each test starts the bundle on a fresh temporary database with test passwords (`patches/h/h.mjs`, `patches/audit/A.mjs`),
-and uses Playwright (`playwright-core`, Chrome at `$CHROME` or `/usr/bin/google-chrome`). `patches/audit/server-clock.mjs` lets a test move the clock.
-Known failing: `m22/t-m22.mjs` (one check), tests that need `$OLD` (an older bundle: `m41b/t-m41b.mjs`, `m51b/t-restart*.mjs`).
+and uses Playwright (`playwright-core`, Chrome at `$CHROME`, `/usr/bin/google-chrome`, or on Windows the installed Chrome/Edge). `patches/audit/server-clock.mjs` lets a test move the clock.
+Known failing (2026-11-26: Linux 87/90, Windows 86/90):
+- `m22/t-m22.mjs` (one check), `audit/e2e10-m36.mjs`, and tests that need `$OLD` (an older bundle, not in the repo: `m41b/t-m41b.mjs`, `m51b/t-restart*.mjs`).
+- Windows only: `m44b/t-m44bui.mjs` (phone width). The tests block Google Fonts, so the page falls back to Tahoma, which exists on
+  Windows but not on Linux or phones; with Tahoma the archive table is 13 px wider than a 390 px screen. Passes on Linux.
 
 ## Release (owner's rules)
 On the owner's laptop: `bash claude-code-kit/build-repo.sh <tag>` (Git Bash) builds `iran-worker-<tag>.mjs` and `cf-<tag>.mjs` from the three repos

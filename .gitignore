@@ -11,3 +11,5 @@ patches/regl-*/
 patches/reg-*.out
 patches/regl-*.out
 package-lock.json
+# test screenshots (UI tests write them next to the test); patches/m43g/file.png stays tracked
+patches/**/*.png

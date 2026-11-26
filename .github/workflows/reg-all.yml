@@ -1,0 +1,33 @@
+# Full regression (about 90 tests) on Linux — manual only: Actions → "Full regression" → Run workflow.
+# Same runner as on the laptop (scripts/reg-all.mjs). No secrets: the bundle is built with placeholders and the tests use synthetic records.
+# The result file patches/reg-linux.out is uploaded as the artifact "reg-linux".
+name: Full regression
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reg-all:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: impyar-backend }
+      - uses: actions/checkout@v4
+        with: { repository: alirezaworktime-art/impyar-frontend, path: impyar-frontend }
+      - uses: actions/checkout@v4
+        with: { repository: alirezaworktime-art/impyar-tablet, path: impyar-tablet }
+      - uses: actions/setup-node@v4
+        with: { node-version: '24' }
+      - name: Build and run all tests
+        working-directory: impyar-backend
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          node scripts/reg-all.mjs dist/worker.mjs linux
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reg-linux
+          path: impyar-backend/patches/reg-linux.out
+          retention-days: 30

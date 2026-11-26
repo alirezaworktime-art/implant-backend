@@ -9,7 +9,7 @@
     "dev": "node scripts/dev.mjs",
     "dev:fresh": "node scripts/dev.mjs --fresh",
     "test": "npm run build && node scripts/run-test.mjs patches/m61a/t-m61a.mjs",
-    "test:all": "npm run build && bash patches/reg-all.sh $PWD/dist/worker.mjs all"
+    "test:all": "npm run build && node scripts/reg-all.mjs dist/worker.mjs all"
   },
   "devDependencies": { "playwright-core": "^1.50.0" }
 }

@@ -46,9 +46,12 @@ jobs:
         with: { repository: alirezaworktime-art/impyar-backend, ref: staging, path: impyar-backend }
       - name: Deploy on the staging server
         run: |
-          tr -d '\r' < impyar-backend/ops/staging/deploy-staging.sh | ssh stg 'cat > /opt/implant-staging/run/deploy-staging.sh'
-          tr -d '\r' < impyar-backend/ops/staging/run-deploy.sh | ssh stg 'cat > /opt/implant-staging/run/run-deploy.sh'
-          ssh stg "bash /opt/implant-staging/run/run-deploy.sh ${{ github.run_id }}-${{ github.run_attempt }}"
+          set -euo pipefail
+          for f in deploy-staging.sh run-deploy.sh; do
+            [ -s impyar-backend/ops/staging/$f ] || { echo "impyar-backend 'staging' has no ops/staging/$f — merge impyar-backend main into staging first"; exit 1; }
+            tr -d '\r' < impyar-backend/ops/staging/$f | ssh stg "cat > /opt/implant-staging/run/$f.new && [ -s /opt/implant-staging/run/$f.new ] && mv /opt/implant-staging/run/$f.new /opt/implant-staging/run/$f"
+          done
+          ssh stg "bash /opt/implant-staging/run/run-deploy.sh ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.event.repository.name }}"
       - name: Check from outside
         env:
           URL_HOST: ${{ vars.STAGING_URL_HOST }}

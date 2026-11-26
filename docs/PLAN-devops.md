@@ -37,9 +37,15 @@ After a successful deploy built from these repos, all work happens here; the old
   service and files are kept but switched off). Service `implant-staging` (127.0.0.1:8788), private Node v24.22.0 like
   production, own folder `/opt/implant-staging`, **own database** built by `scripts/staging-db.mjs` (fake patients in every
   stage, no real data). Same bundle and settings as production otherwise. Setup: `ops/staging/setup-staging.sh`.
-- Deploy: `.github/workflows/staging-deploy.yml` → `ops/staging/deploy-staging.sh` on the server (fetches the `staging`
-  branches of all three repos, builds there, same checks as production, rollback if unhealthy). Runs on every push to
-  `staging` in impyar-backend at once, and every 10 minutes deploys if a `staging` branch of any of the three repos changed.
+- Deploy: every push to `staging` in **any** of the three repos runs `.github/workflows/staging-deploy.yml` (frontend and
+  tablet call it from impyar-backend `staging`). The server part runs detached (`ops/staging/run-deploy.sh` →
+  `deploy-staging.sh`): fetch the three `staging` branches, build there, same checks as production, rollback if unhealthy.
+- Newest push wins: in the same repo GitHub cancels the older run; across repos the newer deploy stops the older one on the
+  server — at once while building (nothing changed), or after the short install → health/rollback window. A stopped run
+  ends SUPERSEDED (green). A run whose commits are already live does nothing. Tested 2026-11-26 (frontend + tablet
+  5 s apart → one real deploy with both).
+- Merging into `staging` stays manual (owner in VS Code, or Claude when asked). Merge impyar-backend first when its
+  deploy scripts changed (the workflow checks and fails loudly otherwise).
 - Releasing a change: commit to `main` → merge into `staging` → check https://demo.impyar.ir → then production.
 - To do: a real `staging.impyar.ir` once the impyar.ir DNS (ArvanCloud) is reachable; then move staging there.
 - Step 1: the same single bundle as production. Step 2: split services on staging (API service; page files and APK served

@@ -1,0 +1,24 @@
+# Can GitHub's runners reach the primary server? Manual only, no secrets. Prints reachable / not reachable per check.
+name: Reachability test
+on:
+  workflow_dispatch:
+    inputs:
+      host: { description: 'Host to test', required: true, default: 'alavi.itpelc.ir' }
+      ssh_port: { description: 'SSH port to test', required: true }
+permissions:
+  contents: read
+jobs:
+  reach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Test
+        env: { H: '${{ inputs.host }}', P: '${{ inputs.ssh_port }}' }
+        run: |
+          echo "::add-mask::$P"
+          t() { if timeout 12 bash -c "exec 3<>/dev/tcp/$H/$1" 2>/dev/null; then echo "$2: reachable"; else echo "$2: NOT reachable"; fi; }
+          echo "DNS: $(getent hosts "$H" >/dev/null && echo resolves || echo 'does not resolve')"
+          t 443 "HTTPS port"
+          t "$P" "SSH port"
+          c=$(curl -s -o /dev/null -m 20 -w '%{http_code}' "https://$H/" || true); echo "HTTPS GET: ${c:-no answer}"
+          b=$(timeout 12 bash -c "exec 3<>/dev/tcp/$H/$P; head -c 7 <&3" 2>/dev/null || true); [ "$b" = "SSH-2.0" ] && echo "SSH banner: ok" || echo "SSH banner: none"

@@ -5,15 +5,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { path: implant-backend }
+        with: { path: impyar-backend }
       - uses: actions/checkout@v4
-        with: { repository: alirezaworktime-art/implant-frontend, path: implant-frontend }
+        with: { repository: alirezaworktime-art/impyar-frontend, path: impyar-frontend }
       - uses: actions/checkout@v4
-        with: { repository: alirezaworktime-art/implant-tablet, path: implant-tablet }
+        with: { repository: alirezaworktime-art/impyar-tablet, path: impyar-tablet }
       - uses: actions/setup-node@v4
         with: { node-version: '24' }
       - name: Build and test
-        working-directory: implant-backend
+        working-directory: impyar-backend
         run: |
           npm install --no-audit --no-fund
           npm test

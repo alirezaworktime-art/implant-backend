@@ -1,5 +1,5 @@
 // Builds the single worker bundle (site + API) that runs on the Iran server (Node + node:sqlite D1 shim) and on Cloudflare.
-// Usage: node scripts/build-bundle.mjs <path-to-implant-frontend> <path-to-implant-tablet> [out=dist/worker.mjs] [--target iran|cloudflare]
+// Usage: node scripts/build-bundle.mjs <path-to-impyar-frontend> <path-to-impyar-tablet> [out=dist/worker.mjs] [--target iran|cloudflare]
 // --target cloudflare uses IMPORT_KEY_CF (the key the nightly Iran → Cloudflare copy uses); iran (default) uses IMPORT_KEY (keep '').
 // Secrets come from secrets/local.mjs (git-ignored); without it the bundle has no passwords (nobody can log in).
 import fs from 'node:fs'; import path from 'node:path'; import url from 'node:url';

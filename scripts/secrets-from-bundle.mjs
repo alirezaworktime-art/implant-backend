@@ -1,6 +1,6 @@
 // Creates secrets/local.mjs from deployed bundles (run on the machine that has them; values are never printed),
 // then checks that build-bundle.mjs + the repos give back the same code.
-// Usage: node scripts/secrets-from-bundle.mjs <iran bundle> <cloudflare bundle> <implant-frontend dir>
+// Usage: node scripts/secrets-from-bundle.mjs <iran bundle> <cloudflare bundle> <impyar-frontend dir>
 import fs from 'node:fs'; import path from 'node:path'; import url from 'node:url'; import os from 'node:os'; import crypto from 'node:crypto'; import { execFileSync } from 'node:child_process';
 const root = path.join(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 const [ir, cf, fe] = process.argv.slice(2); if (!ir || !cf || !fe) { console.error('usage: node scripts/secrets-from-bundle.mjs <iran bundle> <cloudflare bundle> <frontend dir>'); process.exit(2); }

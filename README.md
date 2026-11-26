@@ -1,4 +1,4 @@
-# implant-backend
+# impyar-backend
 
 API server of the Yazd implant clinic treatment-plan system (طرح درمان ایمپلنت یزد), its build, operations scripts,
 the patch history and the tests. State: **m61a** (2026-11-23).
@@ -15,7 +15,7 @@ the patch history and the tests. State: **m61a** (2026-11-23).
 |---|---|
 | `src/header.js` | Constants, default tariffs and settings; placeholders for secrets |
 | `src/server.js` | The whole API (≈1.1 MB, built up by the patches below) |
-| `scripts/build-bundle.mjs` | Builds the deployable bundle: header + site files (**implant-frontend**) + APK (**implant-tablet**) + API |
+| `scripts/build-bundle.mjs` | Builds the deployable bundle: header + site files (**impyar-frontend**) + APK (**impyar-tablet**) + API |
 | `secrets/` | `local.example.mjs`; the real `local.mjs` is git-ignored |
 | `ops/iran-server/` | Server setup, deploy, nightly copy, snapshots, monitor, backup scripts (addresses, ports and keys removed) |
 | `patches/mNN/` | Every change since m17: `SPEC.md`, `client.js` / `css.css` (page), `srv.js` (server), `gen.mjs` → `patch-mNN.mjs`, tests `t-mNN*.mjs` |
@@ -30,7 +30,7 @@ the patch history and the tests. State: **m61a** (2026-11-23).
 
 ## Build
 ```
-node scripts/build-bundle.mjs ../implant-frontend ../implant-tablet dist/worker.mjs
+node scripts/build-bundle.mjs ../impyar-frontend ../impyar-tablet dist/worker.mjs
 ```
 With `secrets/local.mjs` filled in, the output is the same code that runs live (verified byte-for-byte for m61a,
 apart from the placeholder clinic phone in the defaults). Without it the bundle has no passwords.

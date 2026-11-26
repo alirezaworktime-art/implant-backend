@@ -13,7 +13,7 @@
 ## One bundle, three sources
 The deployed file is one ES module (`dist/worker.mjs`, ~8 MB) built by `scripts/build-bundle.mjs` from:
 - `src/header.js` — constants, default tariffs/settings, secret placeholders,
-- `ASSETS` — every file of **implant-frontend** (+ the APK of **implant-tablet**) as `{ t: content-type, d: data, b: base64? }`,
+- `ASSETS` — every file of **impyar-frontend** (+ the APK of **impyar-tablet**) as `{ t: content-type, d: data, b: base64? }`,
 - `src/server.js` — the API.
 
 `export default { fetch }` answers `GET` with an asset and `POST /` with the API. The same file runs on Cloudflare (D1 binding `DB`)
@@ -33,7 +33,7 @@ treatment plan, surgery sessions and prosthesis are JSON columns (`data`, `surg`
 Lab: `labs`, `lab_*`. Stock: `inv_*`. Appointments: `appts`; work queue / reminders: `tasks` (kind + due).
 
 ## Front end
-`implant-frontend/index.html` is the whole app (vanilla JS). Globals and functions are extended the same way as on the server
+`impyar-frontend/index.html` is the whole app (vanilla JS). Globals and functions are extended the same way as on the server
 (wrappers in later `<script>` blocks: one block per patch, marked `---------- mNN (`). PDFs are drawn on a canvas and written by the app.
 Offline: drafts and the surgery-day queue in `localStorage`; service worker for the app shell.
 

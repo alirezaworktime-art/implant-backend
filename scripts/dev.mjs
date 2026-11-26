@@ -4,7 +4,7 @@
 import { spawn, execFileSync } from 'node:child_process'; import fs from 'node:fs'; import path from 'node:path'; import url from 'node:url'; import crypto from 'node:crypto'; import { DatabaseSync } from 'node:sqlite';
 const root = path.join(path.dirname(url.fileURLToPath(import.meta.url)), '..');
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
-const PORT = Number(arg('--port', process.env.PORT || 8787)), FE = arg('--frontend', path.join(root, '..', 'implant-frontend')), TAB = arg('--tablet', path.join(root, '..', 'implant-tablet'));
+const PORT = Number(arg('--port', process.env.PORT || 8787)), FE = arg('--frontend', path.join(root, '..', 'impyar-frontend')), TAB = arg('--tablet', path.join(root, '..', 'impyar-tablet'));
 const data = path.join(root, 'dev-data'), app = path.join(data, 'app'), db = path.join(data, 'dev.db');
 fs.mkdirSync(app, { recursive: true });
 if (process.argv.includes('--fresh')) for (const f of [db, db + '-wal', db + '-shm']) fs.rmSync(f, { force: true });

@@ -1,11 +1,11 @@
 {
-  "name": "implant-backend",
+  "name": "impyar-backend",
   "private": true,
   "type": "module",
   "description": "Yazd implant clinic treatment-plan system — API server, build, ops, patches and tests",
   "engines": { "node": ">=24" },
   "scripts": {
-    "build": "node scripts/build-bundle.mjs ../implant-frontend ../implant-tablet dist/worker.mjs",
+    "build": "node scripts/build-bundle.mjs ../impyar-frontend ../impyar-tablet dist/worker.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:fresh": "node scripts/dev.mjs --fresh",
     "test": "npm run build && node scripts/run-test.mjs patches/m61a/t-m61a.mjs",

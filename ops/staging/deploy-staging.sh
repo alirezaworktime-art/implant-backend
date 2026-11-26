@@ -6,7 +6,7 @@
 # GitHub Actions runs this over SSH on every push to a 'staging' branch; it can also be run by hand.
 set -euo pipefail
 BR=${1:-staging}; S=/opt/implant-staging; N=$S/node/bin/node; GH=https://github.com/alirezaworktime-art
-exec 9>$S/run/deploy.lock; flock -w 600 9 || { echo "another staging deploy is running"; exit 1; }
+exec 9>$S/run/deploy.lock; echo "waiting for the deploy lock (one deploy at a time)…"; flock -w 1500 9 || { echo "another staging deploy is still running after 25 min"; exit 1; }
 TS=$(date +%Y%m%d-%H%M%S)
 
 for r in impyar-backend impyar-frontend impyar-tablet; do
@@ -17,6 +17,10 @@ for r in impyar-backend impyar-frontend impyar-tablet; do
   git -C $d checkout -q -f --detach origin/$BR; git -C $d clean -qfdx -e secrets/
   echo "$r $(git -C $d rev-parse --short HEAD) $(git -C $d log -1 --format=%s | cut -c1-70)"
 done
+HEADS=$(for r in impyar-backend impyar-frontend impyar-tablet; do printf '%s ' "$(git -C $S/src/$r rev-parse HEAD)"; done | sed 's/ $//')
+if [ -f $S/app/worker.js ] && [ "$HEADS" = "$(cat $S/run/deployed.txt 2>/dev/null)" ] && [ "${FORCE:-0}" != 1 ]; then
+  echo "staging already runs exactly these commits (an earlier deploy took them): nothing to do"; echo "live md5: $(md5sum $S/app/worker.js | cut -d' ' -f1)"; echo STAGING-DEPLOY-DONE; exit 0
+fi
 B=$S/src/impyar-backend
 mkdir -p $B/secrets; cp $S/secrets/local.mjs $B/secrets/local.mjs; [ -f $S/secrets/code.txt ] && cp $S/secrets/code.txt $B/secrets/code.txt
 chmod 600 $B/secrets/*

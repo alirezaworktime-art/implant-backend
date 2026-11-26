@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms));
 const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--no-sandbox'] });
 const c = await b.newContext({ viewport: { width: 1280, height: 900 }, locale: 'fa-IR' }); await c.route(/googleapis|gstatic/, r => r.abort()); const p = await c.newPage();

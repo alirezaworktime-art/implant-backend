@@ -9,7 +9,7 @@ export async function start() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'au-')), app = path.join(dir, 'app'); fs.mkdirSync(app);
   fs.copyFileSync(process.env.WORKER, path.join(app, 'worker.js'));
   const port = 20000 + Math.floor(Math.random() * 2000), db = path.join(dir, 'd.db'), clock = path.join(dir, 'clock'); fs.writeFileSync(clock, '0');
-  const p = spawn(process.execPath, ['--no-warnings', new URL('./server-clock.mjs', import.meta.url).pathname], { env: { ...process.env, APP_DIR: app, DB_FILE: db, RUN_DIR: dir, PORT: String(port), HOST: '127.0.0.1', IMPORT_KEY: '', BACKUP_HASH: '', CLOCK: clock }, stdio: ['ignore', 'pipe', 'pipe'] });
+  const p = spawn(process.execPath, ['--no-warnings', new URL('./server-clock.mjs', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')], { env: { ...process.env, APP_DIR: app, DB_FILE: db, RUN_DIR: dir, PORT: String(port), HOST: '127.0.0.1', IMPORT_KEY: '', BACKUP_HASH: '', CLOCK: clock }, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = ''; p.stdout.on('data', d => log += d); p.stderr.on('data', d => log += d);
   for (let i = 0; i < 150 && !/listening/.test(log); i++) await new Promise(r => setTimeout(r, 100));
   const url = `http://127.0.0.1:${port}/`;

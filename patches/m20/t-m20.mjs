@@ -1,7 +1,7 @@
 // t-m20: «تعامل لابراتوار و پزشک» — lab opens a case, observer login (read only), report. Run: WORKER=<bundle> node t-m20.mjs
 // The observer's first password = the first password of user «doctor»; the test swaps that built-in hash for a test one in a temp copy of the bundle (no real password is used here).
 import { createRequire } from 'node:module'; import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import crypto from 'node:crypto';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 const SRC = process.env.WORKER, TMP = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'm20-')), 'w.mjs');
 { let s = fs.readFileSync(SRC, 'utf8'); const m = s.match(/const LF_DEF = \{ lfdoc: '([^']+)'/); if (!m) throw new Error('LF_DEF not found'); s = s.split(m[1]).join(sha('ipk|lf|doctor|test-doc-0')); fs.writeFileSync(TMP, s) }

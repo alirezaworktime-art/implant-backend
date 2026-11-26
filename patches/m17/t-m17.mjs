@@ -1,6 +1,6 @@
 // t-m17: consultant «مردد» / «انصراف» / «تصمیم نگرفت» → plan PDF downloads after a successful save; failed save → no PDF; «نوبت‌دهی» still downloads. Run: WORKER=<bundle> node t-m17.mjs
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const { start, PW } = await import(new URL('../h/h.mjs', import.meta.url).href);
 const h = await start(); let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(x).slice(0, 400))); if (!c) bad++ };
 const W = ms => new Promise(r => setTimeout(r, ms));

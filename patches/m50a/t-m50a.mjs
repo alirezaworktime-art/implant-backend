@@ -1,6 +1,6 @@
 // t-m50a (server + page): general-dentist task, open amount on the discharge card, difference settlement form. Run: WORKER=<m50a bundle> node t-m50a.mjs
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 let bad = 0; const PE = []; const J = (x, n = 600) => String(JSON.stringify(x)).slice(0, n); const W = ms => new Promise(r => setTimeout(r, ms));
 const ok = (c, t, x) => { console.log((c ? 'ok   ' : 'FAIL ') + t + (c || x === undefined ? '' : ' ' + J(x))); if (!c) bad++ };

@@ -10,3 +10,4 @@ patches/reg-*/
 patches/regl-*/
 patches/reg-*.out
 patches/regl-*.out
+package-lock.json

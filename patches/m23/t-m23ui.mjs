@@ -1,6 +1,6 @@
 // t-m23ui: the page asks before a past delivery date / a same-day impression, shows the paused-prosthesis warning on lab orders, and names «اصلاح» before the lab starts an edit. Run: WORKER=<bundle> node t-m23ui.mjs
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
 const rx0 = (await h.call('doctor', 'rxGet', {})).tpl;

@@ -1,6 +1,6 @@
 // t-m50cui: surgery sheet — «فیل اولیه» is the last (far-left) choice of the treatment row. Run: WORKER=<m50c bundle> node t-m50cui.mjs
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid } = A;
 let bad = 0; const PE = []; const W = ms => new Promise(r => setTimeout(r, ms));
 const ok = (c, t, x) => { console.log((c ? 'ok   ' : 'FAIL ') + t + (c || x === undefined ? '' : ' ' + String(JSON.stringify(x)).slice(0, 600))); if (!c) bad++ };

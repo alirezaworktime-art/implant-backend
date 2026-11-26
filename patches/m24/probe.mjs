@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms));
 const rx0 = (await h.call('doctor', 'rxGet', {})).tpl;

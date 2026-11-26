@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid } = A; const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms));
 const n1 = 'بیمار عادی', id1 = await h.add(n1); await h.plan(id1, n1); const id0 = await h.add('فقط پذیرش'); const n2='بیمار تاییدشده', id2 = await h.add(n2); await h.plan(id2,n2); await h.confirm(id2,n2,'book');
 const old = new Date(Date.now() - 400 * 864e5).toISOString().slice(0, 10), yd = new Date(Date.now() - 3 * 864e5).toISOString().slice(0, 10);

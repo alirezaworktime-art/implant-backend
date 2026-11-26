@@ -1,14 +1,14 @@
 // repro: a publish (service restart with a new bundle) while reception is typing a paper file. OLD=<bundle> NEW=<bundle> node t-restart.mjs
 import { spawn } from 'node:child_process'; import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path'; import crypto from 'node:crypto'; import { DatabaseSync } from 'node:sqlite';
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const A = await import(new URL('../audit/A.mjs', import.meta.url).href);
 const W = ms => new Promise(r => setTimeout(r, ms)); const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'au-')), app = path.join(dir, 'app'); fs.mkdirSync(app);
 const port = 23000 + Math.floor(Math.random() * 900), db = path.join(dir, 'd.db'), clock = path.join(dir, 'clock'); fs.writeFileSync(clock, '0');
 const url = `http://127.0.0.1:${port}/`; let p, log = '';
 async function up(bundle) { fs.copyFileSync(bundle, path.join(app, 'worker.js')); log = '';
-  p = spawn(process.execPath, ['--no-warnings', '--import', new URL('../m23/sameday-shim.mjs', import.meta.url).pathname, new URL('../audit/server-clock.mjs', import.meta.url).pathname], { env: { ...process.env, APP_DIR: app, DB_FILE: db, RUN_DIR: dir, PORT: String(port), HOST: '127.0.0.1', IMPORT_KEY: '', BACKUP_HASH: '', CLOCK: clock }, stdio: ['ignore', 'pipe', 'pipe'] });
+  p = spawn(process.execPath, ['--no-warnings', '--import', new URL('../m23/sameday-shim.mjs', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'), new URL('../audit/server-clock.mjs', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')], { env: { ...process.env, APP_DIR: app, DB_FILE: db, RUN_DIR: dir, PORT: String(port), HOST: '127.0.0.1', IMPORT_KEY: '', BACKUP_HASH: '', CLOCK: clock }, stdio: ['ignore', 'pipe', 'pipe'] });
   p.stdout.on('data', d => log += d); p.stderr.on('data', d => log += d); for (let i = 0; i < 150 && !/listening/.test(log); i++) await W(100) }
 const call = async (role, action, body = {}) => (await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, password: role ? A.PW[role] : undefined, ...body }) })).json();
 await up(process.env.OLD); await call(null, 'ping');

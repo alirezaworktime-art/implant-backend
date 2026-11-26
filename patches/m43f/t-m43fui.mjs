@@ -1,6 +1,6 @@
 // t-m43fui: manager settings — the new doctor / staff name is chosen from the personal accounts. Run: WORKER=<m43f bundle> node t-m43fui.mjs
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0;
 const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
 for (const [name, role] of [['دکتر حساب یک', 'doctor'], ['خانم پذیرش', 'staff'], ['دستیار جراحی', 'surgery']]) { const r = await h.call('manager', 'userSave', { u: { name, role, pw: 'Pw-' + Math.random().toString(36).slice(2) + 'A9!' } }); if (!r.ok) console.log('seed', r) }

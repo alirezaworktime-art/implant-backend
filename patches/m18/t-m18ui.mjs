@@ -1,6 +1,6 @@
 // t-m18ui: reception screen — «انجام شد» on a booking task opens the three choices; label on a changed plan; win-back search. Run: WORKER=<bundle> node t-m18ui.mjs
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A;
 const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0; const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 500))); if (!c) bad++ };
 const mk = async n => { const id = await h.add(n); await h.plan(id, n); await h.confirm(id, n, 'book'); return id };

@@ -1,6 +1,6 @@
 // m38 browser test: offline surgery session is queued on the device and sent when the connection is back; lost answer is not recorded twice; server refusal is shown; stuck-patient notice.
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const { uuid, REC } = A; const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms));
 let bad = 0; const ok = (c, t) => { console.log((c ? 'ok   ' : 'FAIL ') + t); if (!c) bad++; };
 const OLD = REC.queueAdd[0].req.id;

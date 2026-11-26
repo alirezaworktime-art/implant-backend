@@ -1,6 +1,6 @@
 import require_fs from 'node:fs';
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); export const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); export const { chromium } = req('playwright-core');
 export const H = await import(new URL('../h/h.mjs', import.meta.url).href); export const SIGN = (await import(new URL('../h/seed2.mjs', import.meta.url).href)).SIGN;
 export async function login(b, h, role, vp) { const c = await b.newContext(Object.assign({ viewport: { width: 1366, height: 900 }, locale: 'fa-IR', timezoneId: 'Asia/Tehran' }, vp || {})); await c.route(/googleapis|gstatic/, r => r.abort());
   const p = await c.newPage(); p.E = []; p.on('pageerror', e => p.E.push('PE ' + e.message)); p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|net::ERR/.test(m.text())) p.E.push('CE ' + m.text()) });

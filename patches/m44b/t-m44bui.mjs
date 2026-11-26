@@ -1,6 +1,6 @@
 // t-m44bui: paper file — «فیل اولیه» + second fixture on the same tooth as its own implant row. Run: WORKER=<m44b bundle> node t-m44bui.mjs
 import { createRequire } from 'node:module';
-const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname); const { chromium } = req('playwright-core');
+const req = createRequire(process.env.NODE_TOOLS || new URL('../../package.json', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')); const { chromium } = req('playwright-core');
 const A = await import(new URL('../audit/A.mjs', import.meta.url).href); const h = await A.start(); const W = ms => new Promise(r => setTimeout(r, ms)); let bad = 0;
 const ok = (c, m, x) => { console.log((c ? 'ok   ' : 'FAIL ') + m + (c ? '' : ' ' + String(JSON.stringify(x)).slice(0, 700))); if (!c) bad++ };
 await h.must('manager', 'settings', { settings: { catalog: [{ b: 'IZEN', sys: '', g: 'ko', d: ['4', '4.5'], l: ['8', '10'], h: [] }, { b: 'Root', sys: '', g: 'rt', d: ['4', '5'], l: ['9', '11'], h: [] }], prices: { imp: { price: '', bp: { ir: '8000000', ko: '10000000', it: '15000000', sw: '20000000', rt: '21000000' } } } } });

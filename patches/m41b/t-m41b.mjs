@@ -37,7 +37,7 @@ try {
     ok(a.ok && b.ok && c.ok && d.ok, 'old bundle: four files saved'); const o1 = bal1(a.id); ok(o1.total === 13000000 && o1.over === 3000000 && o1.credit === 0, 'old bundle raised the total (old rule)', o1);
     h1.stop(); await new Promise(r => setTimeout(r, 600));
     const app = path.join(dir, 'app2'); fs.mkdirSync(app); fs.copyFileSync(NEW, path.join(app, 'worker.js')); const port = 23000 + Math.floor(Math.random() * 1500);
-    const p = spawn(process.execPath, ['--no-warnings', new URL('../audit/server-clock.mjs', import.meta.url).pathname], { env: { ...process.env, APP_DIR: app, DB_FILE: dbf, RUN_DIR: dir, PORT: String(port), HOST: '127.0.0.1', IMPORT_KEY: '', BACKUP_HASH: '', CLOCK: path.join(dir, 'clock') }, stdio: ['ignore', 'pipe', 'pipe'] });
+    const p = spawn(process.execPath, ['--no-warnings', new URL('../audit/server-clock.mjs', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')], { env: { ...process.env, APP_DIR: app, DB_FILE: dbf, RUN_DIR: dir, PORT: String(port), HOST: '127.0.0.1', IMPORT_KEY: '', BACKUP_HASH: '', CLOCK: path.join(dir, 'clock') }, stdio: ['ignore', 'pipe', 'pipe'] });
     let log = ''; p.stdout.on('data', x => log += x); p.stderr.on('data', x => log += x); for (let i = 0; i < 150 && !/listening/.test(log); i++) await new Promise(r => setTimeout(r, 100));
     const call = async (role, action, body = {}) => (await fetch(`http://127.0.0.1:${port}/`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, password: PW[role], ...body }) })).json();
     const sql = q => { const s = new DatabaseSync(dbf); try { return s.prepare(q).all() } finally { s.close() } }, bal2 = balWith(sql);

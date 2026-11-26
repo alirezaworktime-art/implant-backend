@@ -36,5 +36,7 @@ const A = {
 const head = phone(fs.readFileSync(path.join(root, 'src', 'header.js'), 'utf8'))
   .replace('__PW_HASH__', '{' + Object.entries(S.PW_HASH).map(([k, v]) => `'${k}':'${v}'`).join(',') + '}')
   .replace('__IMPORT_KEY__', `'${target === 'cloudflare' ? (S.IMPORT_KEY_CF || '') : S.IMPORT_KEY}'`).replace('__SENDER__', `'${S.SENDER}'`);
-const bundle = head + 'const ASSETS=' + JSON.stringify(A) + ';\n' + `const BACKUP_HASH='${S.BACKUP_HASH}';\n` + mail(fs.readFileSync(path.join(root, 'src', 'server.js'), 'utf8')).replace('__LF_DEF__', '{ ' + Object.entries(S.LF_DEF).map(([k, v]) => `${k}: '${v}'`).join(', ') + ' }');
+// embedded source copy for the daily backup (code.files): secrets/code.txt from scripts/code-from-bundle.mjs (git-ignored); without it the bundle has none
+const codeF = path.join(root, 'secrets', 'code.txt'), CODE = fs.existsSync(codeF) ? fs.readFileSync(codeF, 'utf8') + '\n' : '';
+const bundle = head + 'const ASSETS=' + JSON.stringify(A) + ';\n' + `const BACKUP_HASH='${S.BACKUP_HASH}';\n` + CODE + mail(fs.readFileSync(path.join(root, 'src', 'server.js'), 'utf8')).replace('__LF_DEF__', '{ ' + Object.entries(S.LF_DEF).map(([k, v]) => `${k}: '${v}'`).join(', ') + ' }');
 fs.mkdirSync(path.dirname(out), { recursive: true }); fs.writeFileSync(out, bundle); console.log('wrote', out, bundle.length, 'bytes');

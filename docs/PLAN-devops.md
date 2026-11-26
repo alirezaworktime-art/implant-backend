@@ -32,6 +32,30 @@ After a successful deploy built from these repos, all work happens here; the old
    run the leak check first; rollback path.
 4. After a successful repo deploy: patch method and `implant-plan` → archive.
 
+## Staging (decided 2026-11-26)
+- `staging.itpelc.ir`, on the production server, separate service and **separate database** (started as a copy of
+  production). Identical to production otherwise (same bundle, same settings).
+- Every push to the `staging` branch of **any** of the three repos deploys it automatically (GitHub Actions; the build
+  uses the `staging` branches of all three). GitHub runners reach the server (HTTPS and SSH tested 2026-11-26).
+- Step 1: the same single bundle as production. Step 2: split services on staging (API service; page files and APK served
+  by nginx; frontend deploy = file copy without restart), compare behaviour with production, then do the same for production.
+  Needs: nginx giving the same headers as the bundle (ETag, Cache-Control, HSTS, X-Frame-Options, nosniff, no-referrer,
+  CSP frame-ancestors) and the same routes (`/p`, `/f`, `/probe`); a frontend build step for the build-time values;
+  the daily backup's `code.files` and the Cloudflare copy still need the single bundle.
+
+## Safety issues to fix later (owner: "not now")
+- Staging is identical to production, so it sends to the **production Google Apps Script** (PDFs to Drive, e-mail,
+  settings, sheet) — build staging without the Apps Script id, or with a staging script.
+- Staging accepts the **production passwords** — use test passwords on staging.
+- Staging holds a **copy of real patient data** — use an empty or synthetic database, or an anonymised copy.
+- Staging is **open to everyone** — password at nginx level and `noindex`.
+- Scheduled jobs (nightly copy to Cloudflare, monitor, snapshots) must never run for staging: the nightly copy would
+  overwrite the production Cloudflare copy.
+- The nginx change for staging is on the production server: always `nginx -t` before reload and keep the old config.
+- New releases can change the database schema on first use (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE` in
+  `src/server.js`); rolling back the code does not undo it — keep the pre-deploy database copy, try schema changes on staging first.
+- GitHub Actions secrets (deploy key, build values) are entered by the owner; workflows never print values; the leak check runs first.
+
 ## Deferred (decided "not now")
 - **Tablet app built from `android/`**: the workflow today writes the project from its own text. Plan: build `android/`
   as is, versionCode/versionName from the run, pinned Gradle wrapper, inputs `publish` (no = artifact only) and

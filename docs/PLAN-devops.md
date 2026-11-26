@@ -32,11 +32,16 @@ After a successful deploy built from these repos, all work happens here; the old
    run the leak check first; rollback path.
 4. After a successful repo deploy: patch method and `implant-plan` → archive.
 
-## Staging (decided 2026-11-26)
-- `staging.itpelc.ir`, on the production server, separate service and **separate database** (started as a copy of
-  production). Identical to production otherwise (same bundle, same settings).
-- Every push to the `staging` branch of **any** of the three repos deploys it automatically (GitHub Actions; the build
-  uses the `staging` branches of all three). GitHub runners reach the server (HTTPS and SSH tested 2026-11-26).
+## Staging (running since 2026-11-26)
+- **https://demo.impyar.ir** (the clinics server, not the production server; the address of the old clinics demo, whose
+  service and files are kept but switched off). Service `implant-staging` (127.0.0.1:8788), private Node v24.22.0 like
+  production, own folder `/opt/implant-staging`, **own database** built by `scripts/staging-db.mjs` (fake patients in every
+  stage, no real data). Same bundle and settings as production otherwise. Setup: `ops/staging/setup-staging.sh`.
+- Deploy: `.github/workflows/staging-deploy.yml` → `ops/staging/deploy-staging.sh` on the server (fetches the `staging`
+  branches of all three repos, builds there, same checks as production, rollback if unhealthy). Runs on every push to
+  `staging` in impyar-backend at once, and every 10 minutes deploys if a `staging` branch of any of the three repos changed.
+- Releasing a change: commit to `main` → merge into `staging` → check https://demo.impyar.ir → then production.
+- To do: a real `staging.impyar.ir` once the impyar.ir DNS (ArvanCloud) is reachable; then move staging there.
 - Step 1: the same single bundle as production. Step 2: split services on staging (API service; page files and APK served
   by nginx; frontend deploy = file copy without restart), compare behaviour with production, then do the same for production.
   Needs: nginx giving the same headers as the bundle (ETag, Cache-Control, HSTS, X-Frame-Options, nosniff, no-referrer,
@@ -47,7 +52,11 @@ After a successful deploy built from these repos, all work happens here; the old
 - Staging is identical to production, so it sends to the **production Google Apps Script** (PDFs to Drive, e-mail,
   settings, sheet) — build staging without the Apps Script id, or with a staging script.
 - Staging accepts the **production passwords** — use test passwords on staging.
-- Staging holds a **copy of real patient data** — use an empty or synthetic database, or an anonymised copy.
+- GitHub holds the laptop's **root SSH key** of the clinics server (secret `STAGING_SSH_KEY`) — replace it with a deploy
+  user that may only run the staging deploy.
+- The production build secrets and the CODE copy are on the clinics server (`/opt/implant-staging/secrets`, root only).
+- Scheduled GitHub runs stop after 60 days without a commit in a public repo.
+- (Fixed: staging uses fake patients, no copy of real data.)
 - Staging is **open to everyone** — password at nginx level and `noindex`.
 - Scheduled jobs (nightly copy to Cloudflare, monitor, snapshots) must never run for staging: the nightly copy would
   overwrite the production Cloudflare copy.

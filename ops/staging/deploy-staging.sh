@@ -46,5 +46,6 @@ fi
 C2=$(sqlite3 $DB "$Q" 2>/dev/null | tr '\n' ' ' || true)
 echo "counts before: $C1"; echo "counts after:  $C2"; [ "$C1" = "$C2" ] || [ "$C1" = empty ] && echo "COUNTS SAME" || echo "COUNTS DIFFER — check"
 ls -1t $S/backups/worker-2*.mjs 2>/dev/null | tail -n +11 | xargs -r rm -f   # keep the last 10 builds
+for r in impyar-backend impyar-frontend impyar-tablet; do printf '%s ' "$(git -C $S/src/$r rev-parse HEAD)"; done | sed 's/ $//' > $S/run/deployed.txt   # read by the 10-minute check
 echo "live md5: $(md5sum $S/app/worker.js | cut -d' ' -f1) | marker: $TAG | health: ${H:0:60}"
 echo STAGING-DEPLOY-DONE

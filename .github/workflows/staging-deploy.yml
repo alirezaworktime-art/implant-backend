@@ -1,13 +1,16 @@
-# Deploy the staging copy: every push to 'staging' here, a request from impyar-frontend / impyar-tablet (their own
-# 'staging' pushes), or the Run button. The server fetches the 'staging' branches of all three repos, builds, deploys,
-# checks health, and rolls back if unhealthy (ops/staging/deploy-staging.sh). One deploy at a time.
+# Deploy the staging copy. The server fetches the 'staging' branches of all three repos, builds, deploys, checks health,
+# and rolls back if unhealthy (ops/staging/deploy-staging.sh). One deploy at a time.
+#  - push to 'staging' here, or the Run button: deploy now
+#  - every 10 minutes: deploy only if a 'staging' branch of impyar-backend / impyar-frontend / impyar-tablet has a new
+#    commit (so frontend and tablet need no token of their own)
 # Needs: secret STAGING_SSH_KEY; variables STAGING_HOST, STAGING_SSH_PORT, STAGING_KNOWN_HOSTS, STAGING_URL_HOST.
+# Note: GitHub pauses scheduled runs in a public repo after 60 days without any commit.
 name: Deploy staging
 on:
   push:
     branches: [staging]
-  repository_dispatch:
-    types: [staging-deploy]
+  schedule:
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,9 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-        with: { ref: staging }
-      - name: Deploy on the staging server
+      - name: SSH setup
         env:
           KEY: ${{ secrets.STAGING_SSH_KEY }}
           HOST: ${{ vars.STAGING_HOST }}
@@ -30,16 +31,31 @@ jobs:
         run: |
           [ -n "$KEY" ] || { echo "secret STAGING_SSH_KEY is missing"; exit 1; }
           [ -n "$HOST" ] && [ -n "$PORT" ] && [ -n "$KNOWN" ] || { echo "variables STAGING_HOST / STAGING_SSH_PORT / STAGING_KNOWN_HOSTS are missing"; exit 1; }
-          echo "trigger: ${{ github.event_name }} from ${{ github.event.client_payload.repo || github.repository }} ${{ github.event.client_payload.sha || github.sha }}"
           install -m 700 -d ~/.ssh
           printf '%s\n' "$KEY" > ~/.ssh/staging_key; chmod 600 ~/.ssh/staging_key
           printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
-          tr -d '\r' < ops/staging/deploy-staging.sh | ssh -i ~/.ssh/staging_key -p "$PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=30 root@"$HOST" 'bash -s staging'
-          rm -f ~/.ssh/staging_key
+          printf 'Host stg\n  HostName %s\n  Port %s\n  User root\n  IdentityFile ~/.ssh/staging_key\n  BatchMode yes\n  StrictHostKeyChecking yes\n  ConnectTimeout 30\n' "$HOST" "$PORT" > ~/.ssh/config
+      - name: Anything new on the staging branches?
+        id: chk
+        run: |
+          heads=$(for r in impyar-backend impyar-frontend impyar-tablet; do git ls-remote https://github.com/alirezaworktime-art/$r.git refs/heads/staging | cut -f1; done | tr '\n' ' ' | sed 's/ $//')
+          live=$(ssh stg 'cat /opt/implant-staging/run/deployed.txt 2>/dev/null' || true)
+          echo "staging heads: $heads"; echo "staging runs:  ${live:-unknown}"
+          if [ "${{ github.event_name }}" != schedule ] || [ "$heads" != "$live" ]; then echo "go=1" >> "$GITHUB_OUTPUT"; else echo "nothing new"; fi
+      - uses: actions/checkout@v4
+        if: steps.chk.outputs.go == '1'
+        with: { ref: staging }
+      - name: Deploy on the staging server
+        if: steps.chk.outputs.go == '1'
+        run: tr -d '\r' < ops/staging/deploy-staging.sh | ssh stg 'bash -s staging'
       - name: Check from outside
+        if: steps.chk.outputs.go == '1'
         env:
           URL_HOST: ${{ vars.STAGING_URL_HOST }}
         run: |
           code=$(curl -s -o /dev/null -m 30 -w '%{http_code}' "https://$URL_HOST/"); echo "https://$URL_HOST/ → $code"
           curl -s -m 30 "https://$URL_HOST/" | grep -oE -- '---------- stg-[0-9a-f]+ \(' | head -1
           [ "$code" = 200 ]
+      - name: Remove key
+        if: always()
+        run: rm -f ~/.ssh/staging_key

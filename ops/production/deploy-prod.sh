@@ -31,6 +31,7 @@ p() { printf '%s\n' "$*" >> $PRIV; }
 fail() { echo "FAILED: $*"; p "FAILED: $*"; exit 1; }
 q() { sqlite3 -readonly -cmd ".timeout 15000" "$@"; }   # read-only, waits for the clinic's writes instead of failing
 TOK=$(cat $R/cf-$ID.tok 2>/dev/null || true); rm -f $R/cf-$ID.tok
+[ "$CF" = 1 ] && [ -z "$TOK" ] && { echo "note: no Cloudflare API token (secret CF_API_TOKEN) — the Cloudflare copy is skipped and keeps its current version"; CF=0; }
 trap '' TERM HUP INT     # a production deploy is never stopped halfway
 echo "== production deploy $ID ($(date '+%F %T'))"
 exec 9>$R/deploy.lock

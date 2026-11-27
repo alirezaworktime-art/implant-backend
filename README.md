@@ -18,7 +18,7 @@ the patch history and the tests. State: **m61a** (2026-11-23).
 | `scripts/build-bundle.mjs` | Builds the deployable bundle: header + site files (**impyar-frontend**) + APK (**impyar-tablet**) + API |
 | `secrets/` | `local.example.mjs`; the real `local.mjs` is git-ignored |
 | `ops/iran-server/` | Server setup, deploy, nightly copy, snapshots, monitor, backup scripts (addresses, ports and keys removed) |
-| `patches/mNN/` | Every change since m17: `SPEC.md`, `client.js` / `css.css` (page), `srv.js` (server), `gen.mjs` → `patch-mNN.mjs`, tests `t-mNN*.mjs` |
+| `patches/<tag>/` | Server side and tests of every change since m17: `SPEC.md`, `srv.js`, tests `t-*.mjs` (history; the page parts moved to impyar-frontend `history/page-layers/`). Since 2026-11-27 changes are made directly in the code, not as patches. |
 | `patches/audit`, `patches/h` | Test harness (`A.mjs`, `h.mjs`, `server-clock.mjs`), synthetic records; `patches/reg-all.sh` runs ≈90 tests |
 | `scripts/` | `build-bundle.mjs`, `dev.mjs`, `secrets-from-bundle.mjs`, `gen-docs.mjs`, `hash-password.mjs` |
 | `legacy/` | The first source tree (Oct 2026) and Google Apps Script code |

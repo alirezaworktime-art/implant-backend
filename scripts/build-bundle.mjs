@@ -17,10 +17,16 @@ const mail = t => t.split('sender@example.com').join(S.SENDER || 'sender@example
 const gas = t => mail(phone(S.APPS_SCRIPT_DEPLOYMENT_ID ? t.split('APPS_SCRIPT_DEPLOYMENT_ID').join(S.APPS_SCRIPT_DEPLOYMENT_ID) : t));
 const H = 'text/html; charset=utf-8', J = 'text/javascript; charset=utf-8', P = 'image/png';
 const txt = (t, d) => ({ t, d, b: 0 }), bin = (t, buf) => ({ t, d: buf.toString('base64'), b: 1 });
+// the site files come from impyar-frontend (tools/assets.mjs knows its pages, routes and build-time values); the tablet
+// app from impyar-tablet. Frontend commits from before the src/ split have no tools/assets.mjs: the old layout below.
+const feTool = path.join(fe, 'tools', 'assets.mjs'), apk = bin('application/vnd.android.package-archive', fs.readFileSync(path.join(tab, 'dist', 'implant-plan.apk')));
+let A;
+if (fs.existsSync(feTool)) A = (await import(url.pathToFileURL(feTool))).siteAssets({ values: S, tag, apk });
+else {
 let index = gas(T('index.html', 'utf8'));
 if (tag) { let sha = ''; try { sha = (await import('node:child_process')).execFileSync('git', ['-C', fe, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch (e) { }
   const k = index.lastIndexOf('</body>'); index = index.slice(0, k) + `<!-- ---------- ${tag} (repo build${sha ? ' frontend ' + sha : ''}) -->\n` + index.slice(k); }
-const A = {
+A = {
   '/': txt(H, index),
   '/manifest.webmanifest': txt('application/manifest+json; charset=utf-8', T('manifest.webmanifest', 'utf8')),
   '/sw.js': txt(J, T('sw.js', 'utf8')),
@@ -28,11 +34,12 @@ const A = {
   '/probe': txt(H, gas(T('probe.html', 'utf8'))),
   '/icon-192.png': bin(P, T('icons/icon-192.png')), '/icon-512.png': bin(P, T('icons/icon-512.png')),
   '/icon-maskable-512.png': bin(P, T('icons/icon-maskable-512.png')), '/apple-touch-icon.png': bin(P, T('icons/apple-touch-icon.png')),
-  '/implant-plan.apk': bin('application/vnd.android.package-archive', fs.readFileSync(path.join(tab, 'dist', 'implant-plan.apk'))),
+  '/implant-plan.apk': apk,
   '/index.html': txt(H, index),
   '/f': { t: H, d: gas(T('f.html', 'utf8')) },
   '/pdf.min.mjs': txt(J, T('vendor/pdfjs/pdf.min.mjs', 'utf8')), '/pdf.worker.min.mjs': txt(J, T('vendor/pdfjs/pdf.worker.min.mjs', 'utf8'))
 };
+}
 const head = phone(fs.readFileSync(path.join(root, 'src', 'header.js'), 'utf8'))
   .replace('__PW_HASH__', '{' + Object.entries(S.PW_HASH).map(([k, v]) => `'${k}':'${v}'`).join(',') + '}')
   .replace('__IMPORT_KEY__', `'${target === 'cloudflare' ? (S.IMPORT_KEY_CF || '') : S.IMPORT_KEY}'`).replace('__SENDER__', `'${S.SENDER}'`);

@@ -24,6 +24,8 @@ for r in impyar-backend impyar-frontend impyar-tablet; do
   git -C $d checkout -q -f --detach origin/$BR; git -C $d clean -qfdx -e secrets/
   echo "$r $(git -C $d rev-parse --short HEAD) $(git -C $d log -1 --format=%s | cut -c1-70)"
 done
+FE=$S/src/impyar-frontend   # the frontend's pages are built from its src/: if the committed pages do not match, rebuild them here
+if [ -f $FE/tools/build.mjs ] && ! $N $FE/tools/build.mjs --check >/dev/null 2>&1; then echo "impyar-frontend: committed pages differ from src/ — rebuilding them from src/"; $N $FE/tools/build.mjs; fi
 HEADS=$(for r in impyar-backend impyar-frontend impyar-tablet; do printf '%s ' "$(git -C $S/src/$r rev-parse HEAD)"; done | sed 's/ $//')
 if [ -f $S/app/worker.js ] && [ "$HEADS" = "$(cat $S/run/deployed.txt 2>/dev/null)" ] && [ "${FORCE:-0}" != 1 ]; then
   echo "staging already runs exactly these commits (an earlier deploy took them): nothing to do"; echo "live md5: $(md5sum $S/app/worker.js | cut -d' ' -f1)"; echo STAGING-DEPLOY-DONE; exit 0

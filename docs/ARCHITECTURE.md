@@ -33,7 +33,7 @@ treatment plan, surgery sessions and prosthesis are JSON columns (`data`, `surg`
 Lab: `labs`, `lab_*`. Stock: `inv_*`. Appointments: `appts`; work queue / reminders: `tasks` (kind + due).
 
 ## Front end
-`impyar-frontend/index.html` is the whole app (vanilla JS). Globals and functions are extended the same way as on the server
+`impyar-frontend/index.html` is the whole app (vanilla JS), built from `impyar-frontend/src/` by its `tools/build.mjs` (files by feature, joined in run order; see its `docs/STRUCTURE.md`). The site files for the bundle come from impyar-frontend `tools/assets.mjs`. Globals and functions are extended the same way as on the server
 (wrappers in later `<script>` blocks: one block per patch, marked `---------- mNN (`). PDFs are drawn on a canvas and written by the app.
 Offline: drafts and the surgery-day queue in `localStorage`; service worker for the app shell.
 

@@ -13,7 +13,7 @@ npm run dev:fresh    # same on an empty database
 The three repos must sit side by side (the scripts look for `../impyar-frontend` and `../impyar-tablet`).
 
 ## Change something
-- Page: edit `impyar-frontend/index.html` (or `p.html` / `f.html`), restart `npm run dev`, reload.
+- Page: edit the file under `impyar-frontend/src/` (see its `docs/STRUCTURE.md`), run `node tools/build.mjs` there, restart `npm run dev`, reload. Never edit the generated root pages.
 - API: edit `src/server.js`. A new action: write the function, add it to the role maps (`STAFF_ACTIONS.x = 1` …) and hook it into `arc6Route`
   (see the end of `src/server.js` for many examples).
 - Tables: `CREATE TABLE IF NOT EXISTS` / `ALTER TABLE … ADD COLUMN` inside the server (no migration tool); keep it idempotent.

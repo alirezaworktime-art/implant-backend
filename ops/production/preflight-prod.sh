@@ -35,7 +35,7 @@ if [ "$CF" = 1 ]; then
   ck "test build (Cloudflare bundle): builds, node --check, has its import key" bash -c "$N $T/impyar-backend/scripts/build-bundle.mjs $T/impyar-frontend $T/impyar-tablet $T/c.mjs --target cloudflare --tag preflight && $N --check $T/c.mjs && grep -qE \"^const IMPORT_KEY='[^']+';\" $T/c.mjs"
   if [ -n "$TOK" ]; then
     ck "Cloudflare token works (download of the running Cloudflare worker)" env CF_TOKEN="$TOK" CF_ACCOUNT="$(tr -d ' \r\n' < $D/secrets/cf-account 2>/dev/null)" $N $T/impyar-backend/ops/production/cf-put.mjs get $T/cf-now.mjs
-  else echo "FAIL  Cloudflare token (secret CF_API_TOKEN is empty)"; BAD=1; fi
+  else echo "info  no Cloudflare token (secret CF_API_TOKEN): a deploy updates Yazd only, Cloudflare keeps its current copy"; fi
 fi
 ck "running worker readable (rollback starting point)" test -s $APP/worker.js
 p "running worker md5 $(md5sum $APP/worker.js | cut -d' ' -f1)"

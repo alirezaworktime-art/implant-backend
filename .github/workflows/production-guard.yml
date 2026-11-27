@@ -1,0 +1,22 @@
+# 'production' accepts only pull requests from 'staging' of this same repo (required check "source is staging" in the
+# branch ruleset; the ruleset also forbids direct pushes, force pushes and deleting the branch).
+name: Production guard
+on:
+  pull_request:
+    branches: [production]
+permissions:
+  contents: read
+jobs:
+  source:
+    name: source is staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only staging may be merged into production
+        env:
+          HEAD: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
+        run: |
+          echo "pull request: $HEAD_REPO:$HEAD → production"
+          [ "$HEAD" = staging ] && [ "$HEAD_REPO" = "$BASE_REPO" ] || { echo "refused: only '$BASE_REPO:staging' may be merged into production"; exit 1; }
+          echo "ok"

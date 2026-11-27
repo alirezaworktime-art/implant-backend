@@ -1,0 +1,63 @@
+# Deploy production (the Yazd server, alavi.itpelc.ir, and its Cloudflare copy) on every push to 'production' — that is,
+# every merge of 'staging' into 'production' (the branch is protected: no direct push, PRs only from 'staging').
+# Also runs from impyar-frontend / impyar-tablet (their small workflow calls this one) and from the Run button.
+# The server does the work (ops/production/deploy-prod.sh, started by its forced-command gate): builds the 'production'
+# branches of all three repos with the secrets that live only there, backs up the database and the worker, installs,
+# checks health / marker / md5 / that no plan or payment was lost, rolls back if anything fails, then updates Cloudflare.
+# Production deploys never cancel each other (a second waits); commits already live are not deployed again.
+# The log is public: it shows OK/FAILED only, no counts or amounts (those stay in the server's run/deploy-<id>.private).
+# Needs in the repo that triggers it: secrets PROD_SSH_KEY, CF_API_TOKEN; variables PROD_HOST, PROD_SSH_PORT,
+# PROD_KNOWN_HOSTS, PROD_URL_HOST.
+name: Deploy production
+on:
+  push:
+    branches: [production]
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      PROD_SSH_KEY:
+        required: true
+      CF_API_TOKEN:
+        required: false
+permissions:
+  contents: read
+jobs:
+  deploy:
+    if: ${{ github.event_name != 'push' || !github.event.created }}
+    concurrency:
+      group: production-deploy-${{ github.repository }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Triggered by
+        run: echo "${{ github.repository }} ${{ github.event_name }} ${{ github.ref_name }} ${{ github.sha }}"
+      - name: SSH setup
+        env:
+          KEY: ${{ secrets.PROD_SSH_KEY }}
+          HOST: ${{ vars.PROD_HOST }}
+          PORT: ${{ vars.PROD_SSH_PORT }}
+          KNOWN: ${{ vars.PROD_KNOWN_HOSTS }}
+        run: |
+          [ -n "$KEY" ] || { echo "secret PROD_SSH_KEY is missing in ${{ github.repository }}"; exit 1; }
+          [ -n "$HOST" ] && [ -n "$PORT" ] && [ -n "$KNOWN" ] || { echo "variables PROD_HOST / PROD_SSH_PORT / PROD_KNOWN_HOSTS are missing in ${{ github.repository }}"; exit 1; }
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/prod_key; chmod 600 ~/.ssh/prod_key
+          printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
+          printf 'Host prod\n  HostName %s\n  Port %s\n  User root\n  IdentityFile ~/.ssh/prod_key\n  BatchMode yes\n  StrictHostKeyChecking yes\n  ConnectTimeout 30\n  ServerAliveInterval 30\n' "$HOST" "$PORT" > ~/.ssh/config
+      - name: Deploy on the Yazd server
+        env:
+          CFT: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          set -o pipefail
+          printf '%s\n' "$CFT" | ssh prod "deploy ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.event.repository.name }}"
+      - name: Check from outside
+        env:
+          URL_HOST: ${{ vars.PROD_URL_HOST }}
+        run: |
+          code=$(curl -s -o /dev/null -m 30 -w '%{http_code}' "https://$URL_HOST/"); echo "https://$URL_HOST/ → $code"
+          curl -s -m 60 "https://$URL_HOST/" | grep -oE -- '---------- prod-[0-9a-f]+ \(' | head -1
+          [ "$code" = 200 ]
+      - name: Remove key
+        if: always()
+        run: rm -f ~/.ssh/prod_key

@@ -173,6 +173,10 @@ if [ $DO_IRAN = 1 ]; then
   fi
   E=$(journalctl -u $SVC --since "$T0" --no-pager 2>/dev/null | grep -ciE 'error|exception' || true); echo "errors in the service log since restart: ${E:-0}"
   for g in "$BK/deploy-*.db" "$BK/worker-before-*.js" "$BK/server-before-*.mjs" "$OUTD/iran-*.mjs"; do ls -1t $g 2>/dev/null | tail -n +$((KEEP+1)) | xargs -r rm -f || true; done   # keep the last 10 (only files made here)
+  # what the GitHub "rollback" action needs to put back exactly the state from just before this deploy (rollback-prod.sh)
+  { printf 'TAG=%q\nTS=%q\nBDB=%q\nWB=%q\nSB=%q\nPREV_MD5=%q\nNEW_MD5=%q\nPREV_HEADS=%q\n' "$TAG" "$TS" "$([ $NEWDB = 0 ] && echo $BDB)" \
+      "$([ -f $WB ] && echo $WB)" "$SB" "$LIVE" "$NEW" "$(cat $R/deployed.txt 2>/dev/null || true)"; } > $R/last-deploy.env
+  rm -f $R/last-cf.env
   printf '%s\n' "$HEADS" > $R/deployed.txt; printf '%s\n' "$NEW" > $R/deployed.md5
   q $DB "select count(*) from plans" > $R/last-plans 2>/dev/null || true
   echo "YAZD OK: $TAG md5 $NEW"
@@ -195,6 +199,7 @@ if [ $DO_CF = 1 ]; then
   fi
   ls -1t $OUTD/cf-*.mjs 2>/dev/null | tail -n +$((2*KEEP+1)) | xargs -r rm -f || true
   printf '%s\n' "$HEADS" > $R/cf-deployed.txt
+  printf 'CF_TAG=%q\nCB=%q\n' "$TAG" "$CB" > $R/last-cf.env    # the Cloudflare worker from before this deploy (for the rollback action)
   echo "CLOUDFLARE OK: $TAG"
 fi
 unset TOK

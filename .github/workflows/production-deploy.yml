@@ -4,7 +4,9 @@
 # payment or plan was lost, rolls back if anything fails, keeps the last 10 backups, then updates and checks Cloudflare.
 # Runs on: every push to 'production' here (= a merge of 'staging' into 'production'; the branch is protected: no direct
 # push, pull requests only from 'staging'); every push to 'production' in impyar-frontend / impyar-tablet (their small
-# workflow calls this one); the Run button on the production branch.
+# workflow calls this one); the Run button on the production branch, which also offers: preflight (checks everything,
+# changes nothing), rollback-code (site + Cloudflare back to before the last deploy) and rollback-all (the same and the
+# database from just before the last deploy; entries made since are removed from it, a safety copy is kept).
 # Differences from staging: production deploys never cancel each other (GitHub keeps the running one; the server lock
 # makes a second wait), the secrets live in the GitHub Environment 'production' (only the 'production' branch may use them),
 # and the public log shows only steps and OK/FAILED (numbers stay on the server).
@@ -15,6 +17,16 @@ on:
   push:
     branches: [production]
   workflow_dispatch:
+    inputs:
+      action:
+        description: 'deploy | preflight (check everything, change nothing) | rollback-code (site + Cloudflare back to before the last deploy) | rollback-all (the same AND the database from just before the last deploy: entries made since are removed, a safety copy is kept)'
+        type: choice
+        options: [deploy, preflight, rollback-code, rollback-all]
+        default: deploy
+      confirm:
+        description: 'for rollback-all type ROLLBACK'
+        type: string
+        default: ''
   workflow_call:
     secrets:
       PROD_SSH_KEY:
@@ -55,12 +67,22 @@ jobs:
           CFT: ${{ secrets.CF_API_TOKEN }}
         run: |
           set -uo pipefail
-          for f in deploy-prod.sh run-deploy.sh; do
+          ACT="${{ inputs.action }}"; ACT=${ACT:-deploy}
+          case "$ACT" in
+            deploy) SC=deploy-prod.sh; ARG="";;
+            preflight) SC=preflight-prod.sh; ARG="";;
+            rollback-code) SC=rollback-prod.sh; ARG=code;;
+            rollback-all) SC=rollback-prod.sh; ARG=all
+              [ "${{ inputs.confirm }}" = ROLLBACK ] || { echo "rollback-all removes the entries made since the last deploy from the live database (a safety copy is kept): type ROLLBACK in 'confirm' to run it"; exit 1; };;
+            *) echo "unknown action $ACT"; exit 1;;
+          esac
+          echo "action: $ACT"
+          for f in run-deploy.sh deploy-prod.sh preflight-prod.sh rollback-prod.sh; do
             [ -s impyar-backend/ops/production/$f ] || { echo "impyar-backend 'production' has no ops/production/$f — merge impyar-backend staging into production first"; exit 1; }
             tr -d '\r' < impyar-backend/ops/production/$f | ssh prod "mkdir -p /opt/implant/deploy/run && cat > /opt/implant/deploy/run/$f.new && [ -s /opt/implant/deploy/run/$f.new ] && mv /opt/implant/deploy/run/$f.new /opt/implant/deploy/run/$f" || exit 1
           done
           ID=${{ github.run_id }}-${{ github.run_attempt }}-${{ github.event.repository.name }}
-          printf '%s\n' "${CFT:-}" | ssh prod "bash /opt/implant/deploy/run/run-deploy.sh $ID"; rc=$?
+          printf '%s\n' "${CFT:-}" | ssh prod "bash /opt/implant/deploy/run/run-deploy.sh $ID $SC $ARG"; rc=$?
           if [ $rc = 255 ]; then   # the SSH link dropped; the deploy runs on by itself on the server: wait for its result
             echo "SSH connection lost — the deploy goes on on the server; waiting for its result"
             for i in $(seq 1 120); do sleep 30
@@ -69,6 +91,7 @@ jobs:
           fi
           exit $rc
       - name: Check from outside
+        if: ${{ !inputs.action || inputs.action == 'deploy' }}
         env:
           URL_HOST: ${{ vars.PROD_URL_HOST }}
         run: |

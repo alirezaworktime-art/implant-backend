@@ -81,6 +81,7 @@ if [ $DO_IRAN = 1 ]; then
   BDB=$BK/deploy-$TAG-$TS.db; WB=$BK/worker-before-$TAG-$TS.js
   if [ $NEWDB = 0 ]; then
     sqlite3 $DB ".backup '$BDB'" || fail "database backup failed"
+    sqlite3 $BDB "pragma journal_mode=delete" >/dev/null || fail "database backup: journal mode"   # one self-contained file (no -wal/-shm)
     [ "$(sqlite3 -readonly $BDB 'pragma quick_check' 2>&1)" = ok ] || fail "the database backup does not pass quick_check"
     p "db backup $BDB $(du -h $BDB | cut -f1)"; echo "database backed up and checked (quick_check ok)"
   fi

@@ -52,6 +52,12 @@ NEWDB=0
 if [ ! -f $DB ]; then
   if [ $FIRST = 1 ]; then echo "first deploy and no database: the server creates an empty one on start"; NEWDB=1
   else systemctl stop $SVC || true; fail "the production database is missing and this is not the first deploy: service '$SVC' stopped so it cannot create an empty one. Restore the database (latest backup in $BK), start the service, then run the deploy again"; fi
+elif [ $FIRST = 0 ]; then
+  # the running server re-creates an empty database at once if the file disappears: "no plans now, but plans at the last
+  # deploy" is treated as missing too
+  PC=$(sqlite3 -readonly $DB "select count(*) from plans" 2>/dev/null || echo none); LPC=$(cat $R/last-plans 2>/dev/null || echo 0)
+  if [ "$PC" = none ] || { [ "$PC" = 0 ] && [ "$LPC" -gt 0 ]; }; then
+    systemctl stop $SVC || true; fail "the production database is empty or new (no plans) but the last deploy had data: service '$SVC' stopped. Restore the database (latest backup in $BK), start the service, then run the deploy again"; fi
 fi
 
 # ---- 3. build (secrets only on this server)
@@ -114,9 +120,9 @@ if [ $DO_IRAN = 1 ]; then
       [ "$n" = 0 ] && continue; LOST="$LOST $t:$n"; case $t in plans|pays) KEYLOST=1;; esac
     done
     Q="select count(*)||' '||coalesce(sum(amount),0) from pays"
-    PB=$(sqlite3 -readonly $BDB "$Q"); PL=$(sqlite3 -readonly $DB "$Q")
-    ED=$(sqlite3 -readonly $DB "attach '$BDB' as b; select count(*) from b.pays x join main.pays y on y.id=x.id where coalesce(y.amount,0)<>coalesce(x.amount,0)")
-    p "plans backup/live: $(sqlite3 -readonly $BDB 'select count(*) from plans') / $(sqlite3 -readonly $DB 'select count(*) from plans')"
+    PB=$(sqlite3 -readonly $BDB "$Q" 2>/dev/null || echo "0 0"); PL=$(sqlite3 -readonly $DB "$Q" 2>/dev/null || echo none)
+    ED=$(sqlite3 -readonly $DB "attach '$BDB' as b; select count(*) from b.pays x join main.pays y on y.id=x.id where coalesce(y.amount,0)<>coalesce(x.amount,0)" 2>/dev/null || echo 0)
+    p "plans backup/live: $(sqlite3 -readonly $BDB 'select count(*) from plans' 2>&1) / $(sqlite3 -readonly $DB 'select count(*) from plans' 2>&1)"
     p "pays count+sum backup: $PB | live: $PL | edited amounts: $ED"
     [ $KEYLOST = 1 ] && rollback "rows of plans/payments from the backup are missing now (${LOST# }) — the backup $BDB has them; if a user deleted them during the deploy, run it again"
     [ -n "$LOST" ] && echo "WARNING: rows missing compared with the backup (may be normal deletes during the deploy):$LOST"
@@ -129,6 +135,7 @@ if [ $DO_IRAN = 1 ]; then
   ls -1t $BK/server-before-*.mjs 2>/dev/null | tail -n +$((KEEP+1)) | xargs -r rm -f || true
   ls -1t $OUTD/iran-*.mjs 2>/dev/null | tail -n +$((KEEP+1)) | xargs -r rm -f || true
   printf '%s\n' "$HEADS" > $R/deployed.txt
+  sqlite3 -readonly $DB "select count(*) from plans" > $R/last-plans 2>/dev/null || true   # for the "database suddenly empty" check
   echo "YAZD OK: $TAG md5 $NEW"
 else echo "Yazd already runs these commits"; fi
 

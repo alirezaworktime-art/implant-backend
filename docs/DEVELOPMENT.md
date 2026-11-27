@@ -37,9 +37,26 @@ Known failing (2026-11-26: Linux 87/90, Windows 86/90):
   Windows but not on Linux or phones; with Tahoma the archive table is 13 px wider than a 390 px screen. Passes on Linux.
 
 ## Release (owner's rules)
-On the owner's laptop: `bash claude-code-kit/build-repo.sh <tag>` (Git Bash) builds `iran-worker-<tag>.mjs` and `cf-<tag>.mjs` from the three repos
-(`--tag` puts the marker `---------- <tag> (` into the page) and writes `deploy-<tag>.sh`, `check-<tag>.sh`, `pub-<tag>.sh` the same way as the patch releases;
-then `bash claude-code-kit/work/<tag>/pub-<tag>.sh`.
+`main` → `staging` (GitHub deploys https://demo.impyar.ir) → pull request **staging → production**, merged by the owner →
+GitHub deploys production (Yazd server alavi.itpelc.ir + the Cloudflare copy). Production works exactly like staging
+(`production-deploy.yml` = `staging-deploy.yml` pointed at the Yazd server; `ops/production/run-deploy.sh` + `deploy-prod.sh`
+= the staging pair) with the production guardrails:
+- `production` is protected in all three repos (ruleset): no direct push, no force push, no delete, pull requests only from
+  `staging` (required check "source is staging", `production-guard.yml`, defined by `production` itself). Secrets and
+  variables live in the GitHub Environment `production`, usable only from the `production` branch.
+- A merge in any repo deploys the `production` branches of all three; the server waits until they stop changing (2 min),
+  deploys queue and never cancel each other, and commits already live are not deployed again.
+- Build on the server (secrets only there: `/opt/implant/deploy/secrets`); free-space check; online database backup,
+  self-contained and `quick_check`ed; worker backup; health, a page marker unique to the build (`---------- prod-<hash> (`),
+  md5; data check: every row of the backup (by primary key) must still be there — a lost payment, a lost plan with payments
+  or a payment amount changed without an edit stamp rolls back **and blocks** further deploys (`run/BLOCKED`) until the owner looks.
+- A missing or suddenly empty database (not a first install) stops the deploy; a database the running server still holds
+  open is copied out (`backups/rescue-*.db`), and the service is blocked from starting (systemd drop-in
+  `zz-deploy-blocked.conf`) so it cannot create an empty one.
+- Keeps the last 10 deploy backups (only the files it made). Cloudflare: saves the running worker, uploads, checks the new
+  marker, rolls back and re-checks if bad.
+- The Actions log is public: only steps and OK/FAILED; numbers and tool output stay in `/opt/implant/deploy/run/deploy-<id>.private`.
+One-time setup and bootstrap: `ops/production/setup-prod.sh` (header). Old way (fallback, still works): `bash claude-code-kit/build-repo.sh <tag>` on the laptop, then `pub-<tag>.sh`.
 
 Ask the owner before every change and every release. Never commit passwords, keys or patient data. After a release: md5 of the
 deployed file, version marker on both addresses, service status, error count; keep the previous bundle for rollback.

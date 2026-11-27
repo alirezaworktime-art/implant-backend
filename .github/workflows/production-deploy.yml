@@ -1,13 +1,15 @@
-# Deploy production (the Yazd server, alavi.itpelc.ir, and its Cloudflare copy) on every push to 'production' — that is,
-# every merge of 'staging' into 'production' (the branch is protected: no direct push, PRs only from 'staging').
-# Also runs from impyar-frontend / impyar-tablet (their small workflow calls this one) and from the Run button.
-# The server does the work (ops/production/deploy-prod.sh, started by its forced-command gate): builds the 'production'
-# branches of all three repos with the secrets that live only there, backs up the database and the worker, installs,
-# checks health / marker / md5 / that no plan or payment was lost, rolls back if anything fails, then updates Cloudflare.
-# Production deploys never cancel each other (a second waits); commits already live are not deployed again.
-# The log is public: it shows OK/FAILED only, no counts or amounts (those stay in the server's run/deploy-<id>.private).
-# Needs in the repo that triggers it: secrets PROD_SSH_KEY, CF_API_TOKEN; variables PROD_HOST, PROD_SSH_PORT,
-# PROD_KNOWN_HOSTS, PROD_URL_HOST.
+# Deploy production (the Yazd server alavi.itpelc.ir + its Cloudflare copy). Same as staging-deploy.yml, pointed at the
+# production server, with the production guardrails (ops/production/deploy-prod.sh): the server fetches the 'production'
+# branches of all three repos, builds, backs up the database and the worker, deploys, checks health / marker / md5 / that no
+# payment or plan was lost, rolls back if anything fails, keeps the last 10 backups, then updates and checks Cloudflare.
+# Runs on: every push to 'production' here (= a merge of 'staging' into 'production'; the branch is protected: no direct
+# push, pull requests only from 'staging'); every push to 'production' in impyar-frontend / impyar-tablet (their small
+# workflow calls this one); the Run button on the production branch.
+# Differences from staging: production deploys never cancel each other (GitHub keeps the running one; the server lock
+# makes a second wait), the secrets live in the GitHub Environment 'production' (only the 'production' branch may use them),
+# and the public log shows only steps and OK/FAILED (numbers stay on the server).
+# Needs in the repo that triggers it, Environment 'production': secrets PROD_SSH_KEY, CF_API_TOKEN; variables PROD_HOST,
+# PROD_SSH_PORT, PROD_KNOWN_HOSTS, PROD_URL_HOST.
 name: Deploy production
 on:
   push:
@@ -16,19 +18,20 @@ on:
   workflow_call:
     secrets:
       PROD_SSH_KEY:
-        required: true
+        required: false
       CF_API_TOKEN:
         required: false
 permissions:
   contents: read
 jobs:
   deploy:
-    if: ${{ github.event_name != 'push' || !github.event.created }}
+    if: ${{ github.ref_name == 'production' && !(github.event_name == 'push' && github.event.created) }}
+    environment: production
     concurrency:
       group: production-deploy-${{ github.repository }}
       cancel-in-progress: false
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 90
     steps:
       - name: Triggered by
         run: echo "${{ github.repository }} ${{ github.event_name }} ${{ github.ref_name }} ${{ github.sha }}"
@@ -39,24 +42,38 @@ jobs:
           PORT: ${{ vars.PROD_SSH_PORT }}
           KNOWN: ${{ vars.PROD_KNOWN_HOSTS }}
         run: |
-          [ -n "$KEY" ] || { echo "secret PROD_SSH_KEY is missing in ${{ github.repository }}"; exit 1; }
-          [ -n "$HOST" ] && [ -n "$PORT" ] && [ -n "$KNOWN" ] || { echo "variables PROD_HOST / PROD_SSH_PORT / PROD_KNOWN_HOSTS are missing in ${{ github.repository }}"; exit 1; }
+          [ -n "$KEY" ] || { echo "secret PROD_SSH_KEY is missing in ${{ github.repository }} (Environment 'production')"; exit 1; }
+          [ -n "$HOST" ] && [ -n "$PORT" ] && [ -n "$KNOWN" ] || { echo "variables PROD_HOST / PROD_SSH_PORT / PROD_KNOWN_HOSTS are missing in ${{ github.repository }} (Environment 'production')"; exit 1; }
           install -m 700 -d ~/.ssh
           printf '%s\n' "$KEY" > ~/.ssh/prod_key; chmod 600 ~/.ssh/prod_key
           printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
-          printf 'Host prod\n  HostName %s\n  Port %s\n  User root\n  IdentityFile ~/.ssh/prod_key\n  BatchMode yes\n  StrictHostKeyChecking yes\n  ConnectTimeout 30\n  ServerAliveInterval 30\n' "$HOST" "$PORT" > ~/.ssh/config
+          printf 'Host prod\n  HostName %s\n  Port %s\n  User root\n  IdentityFile ~/.ssh/prod_key\n  BatchMode yes\n  StrictHostKeyChecking yes\n  ConnectTimeout 30\n  ServerAliveInterval 30\n  ServerAliveCountMax 10\n' "$HOST" "$PORT" > ~/.ssh/config
+      - uses: actions/checkout@v4
+        with: { repository: alirezaworktime-art/impyar-backend, ref: production, path: impyar-backend }
       - name: Deploy on the Yazd server
         env:
           CFT: ${{ secrets.CF_API_TOKEN }}
         run: |
-          set -o pipefail
-          printf '%s\n' "$CFT" | ssh prod "deploy ${{ github.run_id }}-${{ github.run_attempt }}-${{ github.event.repository.name }}"
+          set -uo pipefail
+          for f in deploy-prod.sh run-deploy.sh; do
+            [ -s impyar-backend/ops/production/$f ] || { echo "impyar-backend 'production' has no ops/production/$f — merge impyar-backend staging into production first"; exit 1; }
+            tr -d '\r' < impyar-backend/ops/production/$f | ssh prod "mkdir -p /opt/implant/deploy/run && cat > /opt/implant/deploy/run/$f.new && [ -s /opt/implant/deploy/run/$f.new ] && mv /opt/implant/deploy/run/$f.new /opt/implant/deploy/run/$f" || exit 1
+          done
+          ID=${{ github.run_id }}-${{ github.run_attempt }}-${{ github.event.repository.name }}
+          printf '%s\n' "${CFT:-}" | ssh prod "bash /opt/implant/deploy/run/run-deploy.sh $ID"; rc=$?
+          if [ $rc = 255 ]; then   # the SSH link dropped; the deploy runs on by itself on the server: wait for its result
+            echo "SSH connection lost — the deploy goes on on the server; waiting for its result"
+            for i in $(seq 1 120); do sleep 30
+              r=$(ssh prod "cat /opt/implant/deploy/run/deploy-$ID.rc 2>/dev/null" 2>/dev/null || true)
+              [ -n "$r" ] && { ssh prod "tail -n 25 /opt/implant/deploy/run/deploy-$ID.log" || true; rc=$r; break; }; done
+          fi
+          exit $rc
       - name: Check from outside
         env:
           URL_HOST: ${{ vars.PROD_URL_HOST }}
         run: |
           code=$(curl -s -o /dev/null -m 30 -w '%{http_code}' "https://$URL_HOST/"); echo "https://$URL_HOST/ → $code"
-          curl -s -m 60 "https://$URL_HOST/" | grep -oE -- '---------- prod-[0-9a-f]+ \(' | head -1
+          curl -s -m 60 "https://$URL_HOST/" | grep -oE -- '---------- prod-[0-9a-f]+ \(' | tail -1
           [ "$code" = 200 ]
       - name: Remove key
         if: always()

@@ -37,7 +37,7 @@ Known failing (2026-11-26: Linux 87/90, Windows 86/90):
   Windows but not on Linux or phones; with Tahoma the archive table is 13 px wider than a 390 px screen. Passes on Linux.
 
 ## Release (owner's rules)
-`main` → `staging` (GitHub deploys https://demo.impyar.ir) → pull request **staging → production**, merged by the owner →
+`main` → `staging` (GitHub deploys https://alavi-stage.itpelc.ir) → pull request **staging → production**, merged by the owner →
 GitHub deploys production (Yazd server alavi.itpelc.ir + the Cloudflare copy). Production works exactly like staging
 (`production-deploy.yml` = `staging-deploy.yml` pointed at the Yazd server; `ops/production/run-deploy.sh` + `deploy-prod.sh`
 = the staging pair) with the production guardrails:

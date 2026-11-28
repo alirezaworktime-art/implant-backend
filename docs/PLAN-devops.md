@@ -32,11 +32,13 @@ After a successful deploy built from these repos, all work happens here; the old
    run the leak check first; rollback path.
 4. After a successful repo deploy: patch method and `implant-plan` → archive.
 
-## Staging (running since 2026-11-26)
-- **https://demo.impyar.ir** (the clinics server, not the production server; the address of the old clinics demo, whose
-  service and files are kept but switched off). Service `implant-staging` (127.0.0.1:8788), private Node v24.22.0 like
-  production, own folder `/opt/implant-staging`, **own database** built by `scripts/staging-db.mjs` (fake patients in every
-  stage, no real data). Same bundle and settings as production otherwise. Setup: `ops/staging/setup-staging.sh`.
+## Staging (running since 2026-11-26; since 2026-11-28 on the Yazd server)
+- **https://alavi-stage.itpelc.ir** on the Yazd server, fully separated from production: own user `implantstg` (the GitHub
+  deploy logs in as it, never root, and may only restart `implant-staging`), own folder `/opt/implant-staging`, service
+  `implant-staging` (127.0.0.1:8788) with memory/CPU/IO limits, production paths inaccessible, own nginx block and certificate,
+  **own database** (fake patients built by `scripts/staging-db.mjs`, no real data). Secrets and variables in the GitHub
+  Environment `staging` (staging branch only). Setup: `ops/staging/setup-staging.sh`. The old staging (demo.impyar.ir on the
+  clinics server) is switched off; its files are kept.
 - Deploy: every push to `staging` in **any** of the three repos runs `.github/workflows/staging-deploy.yml` (frontend and
   tablet call it from impyar-backend `staging`). The server part runs detached (`ops/staging/run-deploy.sh` →
   `deploy-staging.sh`): fetch the three `staging` branches, build there, same checks as production, rollback if unhealthy.
@@ -46,7 +48,7 @@ After a successful deploy built from these repos, all work happens here; the old
   5 s apart → one real deploy with both).
 - Merging into `staging` stays manual (owner in VS Code, or Claude when asked). Merge impyar-backend first when its
   deploy scripts changed (the workflow checks and fails loudly otherwise).
-- Releasing a change: commit to `main` → merge into `staging` → check https://demo.impyar.ir → then production.
+- Releasing a change: commit to `main` → merge into `staging` → check https://alavi-stage.itpelc.ir → then production.
 - To do: a real `staging.impyar.ir` once the impyar.ir DNS (ArvanCloud) is reachable; then move staging there.
 - Step 1: the same single bundle as production. Step 2: split services on staging (API service; page files and APK served
   by nginx; frontend deploy = file copy without restart), compare behaviour with production, then do the same for production.

@@ -1,4 +1,4 @@
-# Deploy the staging copy (https://demo.impyar.ir). The server fetches the 'staging' branches of all three repos, builds,
+# Deploy the staging copy (https://alavi-stage.itpelc.ir). The server fetches the 'staging' branches of all three repos, builds,
 # deploys, checks health and rolls back if unhealthy (ops/staging/deploy-staging.sh).
 # Runs on: every push to 'staging' here; every push to 'staging' in impyar-frontend / impyar-tablet (their own small
 # workflow calls this one); the Run button. The newest push wins: in the same repo GitHub cancels the older run
@@ -6,8 +6,9 @@
 # (ops/staging/run-deploy.sh), so a cancelled run never leaves staging half-deployed: an older deploy stops at once while
 # building, and finishes the short install → restart → health/rollback window first if it is already inside it.
 # Pushes with commits that are already live do nothing.
-# Needs in the repo that triggers it: secret STAGING_SSH_KEY; variables STAGING_HOST, STAGING_SSH_PORT,
-# STAGING_KNOWN_HOSTS, STAGING_URL_HOST.
+# Needs in the repo that triggers it, Environment "staging" (only the staging branch): secret STAGING_SSH_KEY; variables
+# STAGING_HOST, STAGING_SSH_PORT, STAGING_SSH_USER (implantstg: not root), STAGING_KNOWN_HOSTS, STAGING_URL_HOST.
+# Since 2026-11-28 staging is https://alavi-stage.itpelc.ir on the Yazd server, fully separated from production (ops/staging/setup-staging.sh).
 name: Deploy staging
 on:
   push:
@@ -24,6 +25,7 @@ jobs:
     concurrency:
       group: staging-deploy-${{ github.repository }}
       cancel-in-progress: true
+    environment: staging
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -34,6 +36,7 @@ jobs:
           KEY: ${{ secrets.STAGING_SSH_KEY }}
           HOST: ${{ vars.STAGING_HOST }}
           PORT: ${{ vars.STAGING_SSH_PORT }}
+          SSHU: ${{ vars.STAGING_SSH_USER }}
           KNOWN: ${{ vars.STAGING_KNOWN_HOSTS }}
         run: |
           [ -n "$KEY" ] || { echo "secret STAGING_SSH_KEY is missing in ${{ github.repository }}"; exit 1; }
@@ -41,7 +44,7 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s\n' "$KEY" > ~/.ssh/staging_key; chmod 600 ~/.ssh/staging_key
           printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
-          printf 'Host stg\n  HostName %s\n  Port %s\n  User root\n  IdentityFile ~/.ssh/staging_key\n  BatchMode yes\n  StrictHostKeyChecking yes\n  ConnectTimeout 30\n  ServerAliveInterval 30\n' "$HOST" "$PORT" > ~/.ssh/config
+          printf 'Host stg\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/staging_key\n  BatchMode yes\n  StrictHostKeyChecking yes\n  ConnectTimeout 30\n  ServerAliveInterval 30\n' "$HOST" "$PORT" "${SSHU:-root}" > ~/.ssh/config
       - uses: actions/checkout@v4
         with: { repository: alirezaworktime-art/impyar-backend, ref: staging, path: impyar-backend }
       - name: Deploy on the staging server

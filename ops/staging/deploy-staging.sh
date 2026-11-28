@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build and deploy the staging copy from the three public repos (run as root on the staging server).
+# Build and deploy the staging copy from the three public repos (on the Yazd server as user implantstg since 2026-11-28; also works as root).
 #   bash deploy-staging.sh [branch]        default branch: staging (all three repos)
 # Same steps as a production deploy: build → node --check → no import key → back up the database and the running
 # worker → install → restart → health, page marker, counts before/after. Rolls back the worker if unhealthy.
@@ -7,8 +7,10 @@
 # The newest push wins: a newer deploy stops an older one that is still running. While building (nothing on staging changed
 # yet) the older one stops at once; inside the short install → restart → health/rollback window it finishes that window first.
 set -euo pipefail
-BR=${1:-staging}; S=/opt/implant-staging; N=$S/node/bin/node; GH=https://github.com/alirezaworktime-art; P=$S/run/deploy.pid
+BR=${1:-staging}; S=/opt/implant-staging; N=$S/node/bin/node; [ -x $N ] || N=/usr/bin/node; GH=https://github.com/alirezaworktime-art; P=$S/run/deploy.pid
 CRIT=0
+# not root (Yazd, since 2026-11-28: the deploy user implantstg may only restart this service) → sudo for that; as root (old server) as before
+if [ "$(id -u)" = 0 ]; then SUDO=""; IO="-o implantstg -g implantstg"; else SUDO="sudo -n"; IO=""; fi
 onstop() { if [ "$CRIT" = 1 ]; then echo "newer deploy asked to stop: finishing the install/health step first"; else echo "CANCELLED: a newer push is being deployed (nothing on staging was changed by this run)"; exit 143; fi; }
 trap onstop TERM HUP INT
 if [ -f $P ]; then op=$(cat $P 2>/dev/null || true); if [ -n "$op" ] && [ "$op" != "$$" ] && kill -0 "$op" 2>/dev/null; then echo "an older deploy is running (pid $op): stopping it — the newest push wins"; kill -TERM "$op" 2>/dev/null || true; fi; fi
@@ -43,18 +45,18 @@ NEW=$(md5sum $OUT | cut -d' ' -f1); LIVE=$(md5sum $S/app/worker.js 2>/dev/null |
 echo "built $TAG md5 $NEW (running: ${LIVE:-none})"
 
 CRIT=1   # from here to the health check (and rollback) the run is not stopped halfway
-install -o implantstg -g implantstg -m 644 $B/ops/iran-server/server.mjs $S/app/server.mjs
+install $IO -m 644 $B/ops/iran-server/server.mjs $S/app/server.mjs
 DB=$S/data/implant.db
 Q="select 'plans',count(*) from plans union all select 'pays',count(*)||'/'||coalesce(sum(amount),0) from pays"
 C1=$( [ -f $DB ] && sqlite3 $DB "$Q" 2>/dev/null | tr '\n' ' ' || echo empty)
 [ -f $DB ] && echo ".backup $S/backups/db-before-$TS.db" | sqlite3 $DB
 [ -f $S/app/worker.js ] && cp $S/app/worker.js $S/backups/worker-before-$TS.js
-install -o implantstg -g implantstg -m 644 $OUT $S/app/worker.js
-systemctl restart implant-staging; sleep 3
+install $IO -m 644 $OUT $S/app/worker.js
+$SUDO systemctl reset-failed implant-staging 2>/dev/null || true; $SUDO systemctl restart implant-staging; sleep 3
 H=$(curl -s -m 10 http://127.0.0.1:8788/health || true); M=$(curl -s -m 10 http://127.0.0.1:8788/ | grep -c -- "---------- $TAG (" || true)
 if [ "$(systemctl is-active implant-staging)" != active ] || [ -z "$H" ] || [ "$M" = 0 ]; then
   echo "NOT HEALTHY (service $(systemctl is-active implant-staging), health '${H:0:60}', marker $M)"
-  if [ -f $S/backups/worker-before-$TS.js ]; then install -o implantstg -g implantstg -m 644 $S/backups/worker-before-$TS.js $S/app/worker.js; systemctl restart implant-staging; echo "rolled back"; fi
+  if [ -f $S/backups/worker-before-$TS.js ]; then install $IO -m 644 $S/backups/worker-before-$TS.js $S/app/worker.js; $SUDO systemctl reset-failed implant-staging 2>/dev/null || true; $SUDO systemctl restart implant-staging; echo "rolled back"; fi
   exit 1
 fi
 C2=$(sqlite3 $DB "$Q" 2>/dev/null | tr '\n' ' ' || true)

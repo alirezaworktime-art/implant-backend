@@ -1,32 +1,31 @@
 #!/bin/bash
 # One-time setup of the staging copy (run as root on the staging server; idempotent).
-#   bash setup-staging.sh <hostname>          e.g. demo.impyar.ir
-# Needs: /opt/implant-staging/secrets/local.mjs (and code.txt) copied there first; an nginx certificate that covers <hostname>.
-# Creates: user implantstg, /opt/implant-staging/{app,data,backups,src,secrets,node,run}, private Node (same version as
-# production), /etc/implant-staging.env, systemd implant-staging (127.0.0.1:8788), nginx block for <hostname>.
-# Staging has its own database (data/implant.db) and no timers (no nightly copy, no monitor, no snapshots).
+#   bash setup-staging.sh <hostname> <cert.crt> <cert.key> [deploy-key.pub]
+#   e.g. bash setup-staging.sh alavi-stage.itpelc.ir /etc/lego/.lego/certificates/alavi-stage.itpelc.ir.crt /etc/lego/.lego/certificates/alavi-stage.itpelc.ir.key staging-deploy.pub
+# Since 2026-11-28 staging runs on the Yazd production server (alavi-stage.itpelc.ir), so it is fully separated from production:
+#  - own system user implantstg, own folder /opt/implant-staging, own port 8788, own database (fake data only), no timers
+#    (no nightly copy, no monitor, no snapshots, no Cloudflare, no Google Sheet keys); production files are not readable by it
+#  - systemd limits (memory, CPU, IO, lower priority) so staging can never slow production down
+#  - the GitHub staging deploy logs in as implantstg (never root) and may only restart implant-staging (sudoers)
+#  - its own nginx block and certificate for <hostname>; the production block and certificate are not touched
+# Needs: /opt/implant-staging/secrets/local.mjs (and code.txt) copied there first (staging values, not production ones).
 set -euo pipefail
-HOSTNAME_STG=${1:?usage: setup-staging.sh <hostname>}
-NODE_VER=${NODE_VER:-v24.22.0}                     # production runs v24.22.0 (2026-11-26)
-S=/opt/implant-staging; PORT=8788; U=implantstg
-CERT_DIR=${CERT_DIR:-/etc/letsencrypt/live/impyar.ir}
+HOSTNAME_STG=${1:?usage: setup-staging.sh <hostname> <cert.crt> <cert.key> [deploy-key.pub]}; CRT=${2:?cert}; KEY=${3:?key}; PUB=${4:-}
+S=/opt/implant-staging; PORT=8788; U=implantstg; N=${NODE_BIN:-/usr/bin/node}   # same Node as production
+[ -s "$CRT" ] && [ -s "$KEY" ] || { echo "certificate files missing"; exit 1; }
+[ "$($N -p 'process.versions.node.split(".")[0]')" -ge 24 ] || { echo "Node 24+ needed at $N"; exit 1; }
 
-id $U >/dev/null 2>&1 || useradd --system --home-dir $S --shell /usr/sbin/nologin $U
-mkdir -p $S/{app,data,backups,src,secrets,node,run}
-chown $U:$U $S/app $S/data $S/run $S/backups; chmod 700 $S/secrets; chown root:root $S/secrets
+id $U >/dev/null 2>&1 || useradd --system --home-dir $S --shell /bin/bash $U
+usermod -s /bin/bash $U                                   # the deploy runs as this user over SSH
+mkdir -p $S/{app,data,backups,src,secrets,run,.ssh}
+chown $U:$U $S $S/app $S/data $S/run $S/backups $S/src $S/secrets $S/.ssh; chmod 750 $S; chmod 700 $S/secrets $S/.ssh $S/backups
 [ -f $S/secrets/local.mjs ] || { echo "missing $S/secrets/local.mjs (copy it first)"; exit 1; }
+chown $U:$U $S/secrets/*; chmod 600 $S/secrets/*
+# production must stay closed to the staging user
+if sudo -u $U test -r /opt/implant/data/implant.db 2>/dev/null || sudo -u $U test -r /etc/implant.env 2>/dev/null; then echo "REFUSED: $U can read production files"; exit 1; fi
 
-# private Node, same version as production; checksum checked
-if [ "$($S/node/bin/node -v 2>/dev/null || true)" != "$NODE_VER" ]; then
-  T=$(mktemp -d); cd $T
-  curl -fsSLO https://nodejs.org/dist/$NODE_VER/node-$NODE_VER-linux-x64.tar.xz
-  curl -fsSL https://nodejs.org/dist/$NODE_VER/SHASUMS256.txt | grep " node-$NODE_VER-linux-x64.tar.xz\$" | sha256sum -c -
-  rm -rf $S/node/*; tar -xJf node-$NODE_VER-linux-x64.tar.xz -C $S/node --strip-components=1; cd /; rm -rf $T
-fi
-echo "node: $($S/node/bin/node -v)"
-
-# env file: values from secrets/local.mjs, never printed; no Cloudflare or Google Sheet keys on staging
-BH=$($S/node/bin/node -e "import('file://$S/secrets/local.mjs').then(m => process.stdout.write(String(m.default.BACKUP_HASH || '')))")
+# env file: values from secrets/local.mjs, never printed
+BH=$($N -e "import('file://$S/secrets/local.mjs').then(m => process.stdout.write(String(m.default.BACKUP_HASH || '')))")
 umask 077; cat > /etc/implant-staging.env <<EOF
 NODE_ENV=production
 NODE_NO_WARNINGS=1
@@ -42,35 +41,49 @@ umask 022; unset BH
 
 cat > /etc/systemd/system/implant-staging.service <<EOF
 [Unit]
-Description=Implant plan STAGING (site + API, own database)
+Description=Implant plan STAGING (site + API, own database, fake data) — isolated from production
 After=network.target
 [Service]
 User=$U
 Group=$U
 WorkingDirectory=$S/app
 EnvironmentFile=/etc/implant-staging.env
-ExecStart=$S/node/bin/node $S/app/server.mjs
+ExecStart=$N $S/app/server.mjs
 Restart=always
 RestartSec=2
 NoNewPrivileges=true
 ProtectSystem=strict
+ProtectHome=true
 ReadWritePaths=$S/data $S/run
 PrivateTmp=true
+InaccessiblePaths=/opt/implant /etc/implant.env
+MemoryMax=1200M
+CPUQuota=100%
+Nice=10
+IOWeight=20
 [Install]
 WantedBy=multi-user.target
 EOF
 systemctl daemon-reload; systemctl enable implant-staging >/dev/null 2>&1 || true
 
-# nginx block for the staging hostname (other sites are not edited); nginx -t before reload, else undo
-N=/etc/nginx/sites-available/implant-staging
-cat > $N <<EOF
+# the deploy user may restart only the staging service
+SU=/etc/sudoers.d/implant-staging
+printf '%s\n' "$U ALL=(root) NOPASSWD: /usr/bin/systemctl restart implant-staging, /usr/bin/systemctl reset-failed implant-staging" > $SU.new
+chmod 440 $SU.new; if visudo -cf $SU.new >/dev/null; then mv $SU.new $SU; else rm -f $SU.new; echo "sudoers check failed"; exit 1; fi
+if [ -n "$PUB" ]; then grep -qE '^ssh-ed25519 [A-Za-z0-9+/=]+' $PUB || { echo "not an ed25519 key: $PUB"; exit 1; }
+  K=$(awk '{print $1" "$2}' $PUB); AK=$S/.ssh/authorized_keys; touch $AK
+  grep -vF "$K" $AK > $AK.new || true; printf '%s\n' "restrict $K github-staging-deploy" >> $AK.new; cat $AK.new > $AK; rm -f $AK.new
+  chown $U:$U $AK; chmod 600 $AK; echo "staging deploy key: $(grep -c github-staging-deploy $AK) entry (user $U, no terminal, no forwarding)"; fi
+
+# nginx block for the staging hostname only (the production block is not edited); nginx -t before reload, else undo
+NG=/etc/nginx/sites-available/implant-staging
+cat > $NG <<EOF
 server {
-  listen 443 ssl; listen [::]:443 ssl;
+  listen 443 ssl http2; listen [::]:443 ssl http2;
   server_name $HOSTNAME_STG;
-  ssl_certificate $CERT_DIR/fullchain.pem;
-  ssl_certificate_key $CERT_DIR/privkey.pem;
-  include /etc/letsencrypt/options-ssl-nginx.conf;
-  ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+  ssl_certificate $CRT;
+  ssl_certificate_key $KEY;
+  ssl_protocols TLSv1.2 TLSv1.3;
   client_max_body_size 25m;
   gzip on; gzip_types application/json application/javascript text/css image/svg+xml application/manifest+json; gzip_min_length 1024;
   add_header X-Robots-Tag "noindex, nofollow" always;
@@ -89,6 +102,6 @@ server {
   return 301 https://\$host\$request_uri;
 }
 EOF
-ln -sf $N /etc/nginx/sites-enabled/implant-staging
+ln -sf $NG /etc/nginx/sites-enabled/implant-staging
 if nginx -t 2>/dev/null; then systemctl reload nginx; echo "nginx: $HOSTNAME_STG → 127.0.0.1:$PORT"; else rm -f /etc/nginx/sites-enabled/implant-staging; nginx -t; echo "nginx -t FAILED, block removed"; exit 1; fi
 echo SETUP-DONE

@@ -17,7 +17,7 @@ on:
   workflow_call:
     secrets:
       STAGING_SSH_KEY:
-        required: true
+        required: false     # the key comes from the Environment "staging" (checked in the first step: no key → the run stops before touching the server)
 permissions:
   contents: read
 jobs:
